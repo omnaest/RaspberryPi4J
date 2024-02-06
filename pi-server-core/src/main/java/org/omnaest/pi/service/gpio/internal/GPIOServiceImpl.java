@@ -60,7 +60,14 @@ public class GPIOServiceImpl implements GPIOService
     @PostConstruct
     public void init()
     {
-        this.gpioController = GpioFactory.getInstance();
+        try
+        {
+            this.gpioController = GpioFactory.getInstance();
+        }
+        catch (UnsatisfiedLinkError e)
+        {
+            LOG.error("Unable to initialize pi4j GPIO library", e);
+        }
     }
 
     @PreDestroy
