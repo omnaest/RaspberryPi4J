@@ -127,6 +127,12 @@ public class I2CServiceImpl implements I2CService
         }
 
         @Override
+        public AddressConnector write(byte... data)
+        {
+            return this.write(0xB, data);
+        }
+
+        @Override
         public AddressConnector wait(int duration, TimeUnit timeUnit)
         {
             ThreadUtils.sleep(duration, timeUnit);

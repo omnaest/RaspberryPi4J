@@ -1,4 +1,4 @@
-package org.omnaest.pi.service.gyro.internal;
+package org.omnaest.pi.service.sensor.gyro.internal;
 
 import java.util.Arrays;
 import java.util.List;
@@ -8,10 +8,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.omnaest.pi.client.domain.gyro.Orientation;
-import org.omnaest.pi.service.gyro.GyroscopeService;
 import org.omnaest.pi.service.i2c.I2CService;
 import org.omnaest.pi.service.i2c.I2CService.AddressConnector;
 import org.omnaest.pi.service.i2c.I2CService.BusNumber;
+import org.omnaest.pi.service.sensor.gyro.GyroscopeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

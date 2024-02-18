@@ -5,6 +5,7 @@ import java.util.function.LongSupplier;
 
 import org.omnaest.pi.client.domain.gyro.Orientation;
 import org.omnaest.pi.client.domain.motor.MotorMovementDirection;
+import org.omnaest.pi.client.domain.pressure.PressureAndTemperature;
 
 public interface PiClient
 {
@@ -36,6 +37,22 @@ public interface PiClient
     I2CAccess forI2C();
 
     Motor motor();
+
+    DisabledFlowSensor flowSensor(int pin);
+
+    DisabledPressureSensorMS5837 pressureSensorMS5837();
+
+    public static interface DisabledPressureSensorMS5837
+    {
+        public PressureSensorMS5837 enable();
+    }
+
+    public static interface PressureSensorMS5837
+    {
+        public PressureAndTemperature read();
+
+        public DisabledPressureSensorMS5837 disable();
+    }
 
     public static interface Motor
     {
@@ -180,6 +197,28 @@ public interface PiClient
         public byte readByte(int deviceAddress, int localAddress, int offset);
 
         public void writeByte(int deviceAddress, int localAddress, int offset, byte value);
+    }
+
+    public static interface DisabledFlowSensor
+    {
+        public DisabledFlowSensor withFlowRateCoefficient(double flowRateCoefficient);
+
+        /**
+         * Enables
+         * 
+         * @see #withFlowRateCoefficient(double)
+         * @return
+         */
+        public FlowSensor enable();
+    }
+
+    public static interface FlowSensor
+    {
+
+        public double getFlowRate();
+
+        public DisabledFlowSensor disable();
+
     }
 
 }

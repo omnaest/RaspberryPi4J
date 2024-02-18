@@ -298,12 +298,20 @@ public class GPIOServiceImpl implements GPIOService
         {
             this.portToDigitalInputPin.computeIfPresent(this.port, (digitalPort, pin) ->
             {
+                pin.removeAllListeners();
+                pin.removeAllTriggers();
                 this.gpioController.unexport(pin);
                 this.enabled = false;
                 LOG.info("Disabled port " + digitalPort + " for digital input");
                 return null;
             });
             return this;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return this.enabled;
         }
 
         @Override

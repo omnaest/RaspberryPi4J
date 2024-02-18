@@ -97,6 +97,8 @@ public interface GPIOService
 
         public DigitalInputGPIOPort addStateChangeListener(Consumer<DigitalInputPinStateChange> stateChangeListener);
 
+        public boolean isEnabled();
+
         public static class DigitalInputPinStateChange
         {
             private boolean previous;
@@ -110,6 +112,24 @@ public interface GPIOService
             public boolean getCurrent()
             {
                 return this.current;
+            }
+
+            /**
+             * @see #isRaisingEdge()
+             * @return
+             */
+            public boolean isFallingEdge()
+            {
+                return this.previous && !this.current;
+            }
+
+            /**
+             * @see #isFallingEdge()
+             * @return
+             */
+            public boolean isRaisingEdge()
+            {
+                return !this.previous && this.current;
             }
 
             public DigitalInputPinStateChange(boolean previous, boolean current)

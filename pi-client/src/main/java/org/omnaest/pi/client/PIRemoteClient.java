@@ -6,10 +6,13 @@ import java.util.function.Consumer;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.omnaest.pi.client.domain.flow.FlowSensorDefinition;
 import org.omnaest.pi.client.domain.gyro.Orientation;
 import org.omnaest.pi.client.domain.motor.L298nMotorControlDefinition;
 import org.omnaest.pi.client.domain.motor.MotorMovementDefinition;
 import org.omnaest.pi.client.domain.motor.MotorMovementDirection;
+import org.omnaest.pi.client.domain.pressure.PressureAndTemperature;
 import org.omnaest.utils.JSONHelper;
 import org.omnaest.utils.rest.client.RestHelper;
 
@@ -533,4 +536,92 @@ public class PIRemoteClient implements PiClient
         };
     }
 
+    @Override
+    public DisabledFlowSensor flowSensor(int signalPin)
+    {
+        return new FlowSensorImpl(signalPin);
+    }
+
+    @Override
+    public DisabledPressureSensorMS5837 pressureSensorMS5837()
+    {
+        return new PressureSensorMS5837Impl();
+    }
+
+    private class PressureSensorMS5837Impl implements DisabledPressureSensorMS5837, PressureSensorMS5837
+    {
+        private String sensorId;
+
+        @Override
+        public PressureSensorMS5837 enable()
+        {
+            String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/sensor/pressure/MS5837";
+            this.sensorId = RestHelper.requestPost(url, "");
+            return this;
+        }
+
+        @Override
+        public PressureAndTemperature read()
+        {
+            String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/sensor/pressure/MS5837/" + this.sensorId;
+            return Optional.ofNullable(RestHelper.requestGet(url))
+                           .filter(StringUtils::isNotBlank)
+                           .map(json -> JSONHelper.readFromString(json, PressureAndTemperature.class))
+                           .orElse(PressureAndTemperature.builder()
+                                                         .build());
+        }
+
+        @Override
+        public DisabledPressureSensorMS5837 disable()
+        {
+            String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/sensor/pressure/MS5837/" + this.sensorId;
+            RestHelper.requestDelete(url);
+            return this;
+        }
+    }
+
+    private class FlowSensorImpl implements FlowSensor, DisabledFlowSensor
+    {
+        private final int signalPin;
+        private double    flowRateCoefficient = 7.5;
+
+        private FlowSensorImpl(int signalPin)
+        {
+            this.signalPin = signalPin;
+        }
+
+        @Override
+        public DisabledFlowSensor withFlowRateCoefficient(double flowRateCoefficient)
+        {
+            this.flowRateCoefficient = flowRateCoefficient;
+            return this;
+        }
+
+        @Override
+        public FlowSensor enable()
+        {
+            String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/sensor/flow/" + this.signalPin;
+            RestHelper.requestPut(url, JSONHelper.prettyPrint(FlowSensorDefinition.builder()
+                                                                                  .flowRateCoefficient(this.flowRateCoefficient)
+                                                                                  .build()));
+            return this;
+        }
+
+        @Override
+        public DisabledFlowSensor disable()
+        {
+            String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/sensor/flow/" + this.signalPin;
+            RestHelper.requestDelete(url);
+            return this;
+        }
+
+        @Override
+        public double getFlowRate()
+        {
+            String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/sensor/flow/" + this.signalPin;
+            return Optional.ofNullable(RestHelper.requestGet(url))
+                           .map(NumberUtils::toDouble)
+                           .orElse(0.0);
+        }
+    }
 }

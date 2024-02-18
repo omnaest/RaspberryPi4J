@@ -1,4 +1,4 @@
-package org.omnaest.pi.service.gyro;
+package org.omnaest.pi.service.sensor.gyro;
 
 import org.omnaest.pi.client.domain.gyro.Orientation;
 

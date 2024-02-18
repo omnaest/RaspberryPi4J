@@ -45,7 +45,17 @@ public interface I2CService
 
         public int asIntFromMsbToLsb(int startIndex, int endIndex)
         {
-            int result = 0;
+            return (int) this.asLongFromMsbToLsb(startIndex, endIndex);
+        }
+
+        public long asLongFromMsbToLsb(int startIndex)
+        {
+            return this.asLongFromMsbToLsb(startIndex, startIndex + 3);
+        }
+
+        public long asLongFromMsbToLsb(int startIndex, int endIndex)
+        {
+            long result = 0;
             for (int ii = startIndex; ii <= endIndex; ii++)
             {
                 result = result * 256 + (this.data[ii] & 0xFF);
@@ -56,6 +66,7 @@ public interface I2CService
         public int[] asIntFromMsbToLsb()
         {
             return IntStream.range(0, this.data.length / 2)
+                            .map(startIndex -> startIndex * 2)
                             .map(startIndex -> this.asIntFromMsbToLsb(startIndex))
                             .toArray();
         }
@@ -83,6 +94,14 @@ public interface I2CService
         public Optional<ByteArray> read(int start, int size);
 
         public AddressConnector write(int localAddress, byte... data);
+
+        /**
+         * Similar to {@link #write(int, byte...)} to local address 0
+         * 
+         * @param data
+         * @return
+         */
+        public AddressConnector write(byte... data);
 
         public AddressConnector wait(int duration, TimeUnit timeUnit);
 

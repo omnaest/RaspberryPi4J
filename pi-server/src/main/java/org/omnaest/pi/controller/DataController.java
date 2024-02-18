@@ -18,9 +18,13 @@
 */
 package org.omnaest.pi.controller;
 
+import java.util.Optional;
+
+import org.omnaest.pi.client.domain.flow.FlowSensorDefinition;
 import org.omnaest.pi.client.domain.gyro.Orientation;
 import org.omnaest.pi.client.domain.motor.L298nMotorControlDefinition;
 import org.omnaest.pi.client.domain.motor.MotorMovementDefinition;
+import org.omnaest.pi.client.domain.pressure.PressureAndTemperature;
 import org.omnaest.pi.domain.BMP180Measurement;
 import org.omnaest.pi.domain.CameraSnapshot;
 import org.omnaest.pi.domain.CameraSnapshotOptions;
@@ -31,17 +35,21 @@ import org.omnaest.pi.service.UltrasonicService;
 import org.omnaest.pi.service.compass.CompassService;
 import org.omnaest.pi.service.compass.CompassService.Module;
 import org.omnaest.pi.service.gpio.GPIOService;
-import org.omnaest.pi.service.gyro.GyroscopeService;
 import org.omnaest.pi.service.i2c.I2CService;
 import org.omnaest.pi.service.i2c.I2CService.ByteArray;
 import org.omnaest.pi.service.motor.MotorControlService;
 import org.omnaest.pi.service.motor.MotorControlService.MotorControl;
 import org.omnaest.pi.service.rotary.RotaryEncoderService;
+import org.omnaest.pi.service.sensor.flow.FlowSensorService;
+import org.omnaest.pi.service.sensor.gyro.GyroscopeService;
+import org.omnaest.pi.service.sensor.pressure.PressureSensorMS5837Service;
 import org.omnaest.pi.service.servo.ServoDriverService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -78,6 +86,12 @@ public class DataController
 
     @Autowired
     private MotorControlService motorControlService;
+
+    @Autowired
+    private FlowSensorService flowSensorService;
+
+    @Autowired
+    private PressureSensorMS5837Service pressureSensorMS5837Service;
 
     @Autowired
     private EnvironmentService environmentService;
@@ -258,4 +272,39 @@ public class DataController
                                 .ifPresent(MotorControl::stop);
     }
 
+    @PutMapping(path = "/sensor/flow/{port}")
+    public void enableFlowSensor(@PathVariable(name = "port") int port, @RequestBody FlowSensorDefinition flowSensorDefinition)
+    {
+        this.flowSensorService.enableFlowSensor(port, flowSensorDefinition);
+    }
+
+    @GetMapping(path = "/sensor/flow/{port}")
+    public double getFlowRate(@PathVariable(name = "port") int port)
+    {
+        return this.flowSensorService.getFlowRate(port);
+    }
+
+    @DeleteMapping(path = "/sensor/flow/{port}")
+    public void disableFlowSensor(@PathVariable(name = "port") int port)
+    {
+        this.flowSensorService.disableFlowSensor(port);
+    }
+
+    @PostMapping(path = "/sensor/pressure/MS5837")
+    public String enablePressureSensorMS5837()
+    {
+        return this.pressureSensorMS5837Service.enableSensorAndGetSensorId();
+    }
+
+    @GetMapping(path = "/sensor/pressure/MS5837/{sensorId}")
+    public Optional<PressureAndTemperature> getPressureAndTemperatureFromPressureSensorMS5837(@PathVariable(name = "sensorId") String sensorId)
+    {
+        return this.pressureSensorMS5837Service.readSensor(sensorId);
+    }
+
+    @DeleteMapping(path = "/sensor/pressure/MS5837/{sensorId}")
+    public void disablePressureSensorMS5837(@PathVariable(name = "sensorId") String sensorId)
+    {
+        this.pressureSensorMS5837Service.disableSensor(sensorId);
+    }
 }
