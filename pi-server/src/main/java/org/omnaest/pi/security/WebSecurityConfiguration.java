@@ -1,18 +1,18 @@
 package org.omnaest.pi.security;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 
 @Configuration
-public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter
+public class WebSecurityConfiguration
 {
 
-    @Override
-    public void configure(WebSecurity web) throws Exception
+    @Bean
+    protected WebSecurityCustomizer webSecurityCustomizer()
     {
-        web.ignoring()
-           .anyRequest();
+        return web -> web.ignoring()
+                         .anyRequest();
     }
 
 }

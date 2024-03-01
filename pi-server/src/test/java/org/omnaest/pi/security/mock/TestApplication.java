@@ -1,4 +1,4 @@
-package org.omnaest.pi;
+package org.omnaest.pi.security.mock;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -8,10 +8,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 @SpringBootApplication
 @EnableScheduling
 @EnableWebSecurity
-public class Application
+public class TestApplication
 {
     public static void main(String[] args)
     {
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(TestApplication.class, args);
     }
 }

@@ -129,7 +129,15 @@ public class I2CServiceImpl implements I2CService
         @Override
         public AddressConnector write(byte... data)
         {
-            return this.write(0xB, data);
+            try
+            {
+                this.device.write(data);
+            }
+            catch (IOException e)
+            {
+                throw new IllegalStateException(e);
+            }
+            return this;
         }
 
         @Override

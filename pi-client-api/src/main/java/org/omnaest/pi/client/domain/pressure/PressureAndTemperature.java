@@ -15,7 +15,10 @@ import lombok.NoArgsConstructor;
 public class PressureAndTemperature
 {
     @JsonProperty
-    private double pressure;
+    private double pressureAbsolute;
+
+    @JsonProperty
+    private double pressureRelative;
 
     @JsonProperty
     private double temperature;
