@@ -24,6 +24,7 @@ import org.omnaest.pi.client.domain.flow.FlowSensorDefinition;
 import org.omnaest.pi.client.domain.gyro.Orientation;
 import org.omnaest.pi.client.domain.motor.L298nMotorControlDefinition;
 import org.omnaest.pi.client.domain.motor.MotorMovementDefinition;
+import org.omnaest.pi.client.domain.pressure.MS5837Model;
 import org.omnaest.pi.client.domain.pressure.PressureAndTemperature;
 import org.omnaest.pi.domain.BMP180Measurement;
 import org.omnaest.pi.domain.CameraSnapshot;
@@ -290,10 +291,10 @@ public class DataController
         this.flowSensorService.disableFlowSensor(port);
     }
 
-    @PostMapping(path = "/sensor/pressure/MS5837")
-    public String enablePressureSensorMS5837()
+    @PostMapping(path = "/sensor/pressure/MS5837/{model}")
+    public String enablePressureSensorMS5837(@PathVariable(name = "model") MS5837Model model)
     {
-        return this.pressureSensorMS5837Service.enableSensorAndGetSensorId();
+        return this.pressureSensorMS5837Service.enableSensorAndGetSensorId(model);
     }
 
     @GetMapping(path = "/sensor/pressure/MS5837/{sensorId}")

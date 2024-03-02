@@ -5,6 +5,7 @@ import java.util.function.LongSupplier;
 
 import org.omnaest.pi.client.domain.gyro.Orientation;
 import org.omnaest.pi.client.domain.motor.MotorMovementDirection;
+import org.omnaest.pi.client.domain.pressure.MS5837Model;
 import org.omnaest.pi.client.domain.pressure.PressureAndTemperature;
 
 public interface PiClient
@@ -40,7 +41,7 @@ public interface PiClient
 
     DisabledFlowSensor flowSensor(int pin);
 
-    DisabledPressureSensorMS5837 pressureSensorMS5837();
+    DisabledPressureSensorMS5837 pressureSensorMS5837(MS5837Model model);
 
     public static interface DisabledPressureSensorMS5837
     {

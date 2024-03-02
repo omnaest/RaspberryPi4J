@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import org.omnaest.pi.client.domain.pressure.MS5837Model;
 import org.omnaest.pi.client.domain.pressure.PressureAndTemperature;
 import org.omnaest.pi.service.i2c.I2CService;
 import org.omnaest.pi.service.i2c.I2CService.AddressConnector;
@@ -31,18 +32,19 @@ public class PressureSensorMS5837ServiceImpl implements PressureSensorMS5837Serv
     private final Map<String, PressureSensorContext> sensorIdToContext = new ConcurrentHashMap<>();
 
     @Override
-    public String enableSensorAndGetSensorId()
+    public String enableSensorAndGetSensorId(MS5837Model model)
     {
         I2CBusControl busControl = this.i2cService.provision(BusNumber.BUS_1)
                                                   .orElseThrow(() -> new IllegalStateException("Unable to provision I2C bus for pressure sensor"));
         AddressConnector address = busControl.connectTo(0x76)
                                              .orElseThrow(() -> new IllegalArgumentException("Unable to connect to pressure sensor address via I2C"));
 
-        double initialPressure = this.readPressureAndTemperature(address, 0)
+        double initialPressure = this.readPressureAndTemperature(address, 0, model)
                                      .getPressureAbsolute();
         PressureSensorContext context = PressureSensorContext.builder()
                                                              .address(address)
                                                              .initalPressure(initialPressure)
+                                                             .model(model)
                                                              .build();
 
         String sensorId = UUID.randomUUID()
@@ -52,10 +54,10 @@ public class PressureSensorMS5837ServiceImpl implements PressureSensorMS5837Serv
         return sensorId;
     }
 
-    private Function<Long, PressureAndTemperature> createPressureAndTemperatureFunction(AddressConnector address, double initalPressure)
+    private Function<Long, PressureAndTemperature> createPressureAndTemperatureFunction(AddressConnector address, double initalPressure, MS5837Model model)
     {
         address.write((byte) 0x1E);
-        ThreadUtils.sleepSilently(50, TimeUnit.MILLISECONDS);
+        ThreadUtils.sleepSilently(20, TimeUnit.MILLISECONDS);
 
         int C1 = address.read(0xA2, 0, 2)
                         .orElseThrow(() -> new IllegalStateException("Unable read pressure sensor I2C address for C1"))
@@ -77,14 +79,14 @@ public class PressureSensorMS5837ServiceImpl implements PressureSensorMS5837Serv
                         .asIntFromMsbToLsb(0);
 
         address.write((byte) 0x40);
-        ThreadUtils.sleepSilently(50, TimeUnit.MILLISECONDS);
+        ThreadUtils.sleepSilently(20, TimeUnit.MILLISECONDS);
 
         long D1 = address.read(0x00, 0, 3)
                          .orElseThrow(() -> new IllegalStateException("Unable read pressure sensor I2C address for D1"))
                          .asLongFromMsbToLsb(0, 2);
 
         address.write((byte) 0x50);
-        ThreadUtils.sleepSilently(50, TimeUnit.MILLISECONDS);
+        ThreadUtils.sleepSilently(20, TimeUnit.MILLISECONDS);
         return D2 ->
         {
             long dT = D2 - C5 * 256;
@@ -116,7 +118,8 @@ public class PressureSensorMS5837ServiceImpl implements PressureSensorMS5837Serv
             TEMP = TEMP - T2;
             OFF = OFF - OFF2;
             SENS = SENS - SENS2;
-            double pressureAbsolute = ((((D1 * SENS) / 2097152) - OFF) / 8192) / 10.0;
+            double sensorModelCoefficient = MS5837Model.MS5837_02BA.equals(model) ? 100.0 : 10;
+            double pressureAbsolute = ((((D1 * SENS) / 2097152) - OFF) / 8192) / sensorModelCoefficient;
             double temperature = TEMP / 100.0;
 
             double pressureRelative = pressureAbsolute - initalPressure;
@@ -138,12 +141,12 @@ public class PressureSensorMS5837ServiceImpl implements PressureSensorMS5837Serv
     public Optional<PressureAndTemperature> readSensor(String sensorId)
     {
         return Optional.ofNullable(this.sensorIdToContext.get(sensorId))
-                       .map(context -> this.readPressureAndTemperature(context.getAddress(), context.getInitalPressure()));
+                       .map(context -> this.readPressureAndTemperature(context.getAddress(), context.getInitalPressure(), context.getModel()));
     }
 
-    private PressureAndTemperature readPressureAndTemperature(AddressConnector address, double initalPressure)
+    private PressureAndTemperature readPressureAndTemperature(AddressConnector address, double initalPressure, MS5837Model model)
     {
-        Function<Long, PressureAndTemperature> pressureAndTemperatureFunction = this.createPressureAndTemperatureFunction(address, initalPressure);
+        Function<Long, PressureAndTemperature> pressureAndTemperatureFunction = this.createPressureAndTemperatureFunction(address, initalPressure, model);
 
         long D2 = address.read(0x00, 0, 3)
                          .orElseThrow(() -> new IllegalStateException("Unable read pressure sensor I2C address for D2"))
@@ -163,5 +166,6 @@ public class PressureSensorMS5837ServiceImpl implements PressureSensorMS5837Serv
     {
         private final AddressConnector address;
         private final double           initalPressure;
+        private final MS5837Model      model;
     }
 }
