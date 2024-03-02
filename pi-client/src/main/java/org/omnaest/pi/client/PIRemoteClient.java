@@ -12,12 +12,15 @@ import org.omnaest.pi.client.domain.gyro.Orientation;
 import org.omnaest.pi.client.domain.motor.L298nMotorControlDefinition;
 import org.omnaest.pi.client.domain.motor.MotorMovementDefinition;
 import org.omnaest.pi.client.domain.motor.MotorMovementDirection;
+import org.omnaest.pi.client.domain.pressure.MS5837Model;
 import org.omnaest.pi.client.domain.pressure.PressureAndTemperature;
 import org.omnaest.utils.JSONHelper;
 import org.omnaest.utils.rest.client.RestHelper;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Remote {@link PiClient} implementation that utilizes REST communication to invoke the calls.
@@ -543,19 +546,21 @@ public class PIRemoteClient implements PiClient
     }
 
     @Override
-    public DisabledPressureSensorMS5837 pressureSensorMS5837()
+    public DisabledPressureSensorMS5837 pressureSensorMS5837(MS5837Model model)
     {
-        return new PressureSensorMS5837Impl();
+        return new PressureSensorMS5837Impl(model);
     }
 
+    @RequiredArgsConstructor
     private class PressureSensorMS5837Impl implements DisabledPressureSensorMS5837, PressureSensorMS5837
     {
-        private String sensorId;
+        private final MS5837Model model;
+        private String            sensorId;
 
         @Override
         public PressureSensorMS5837 enable()
         {
-            String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/sensor/pressure/MS5837";
+            String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/sensor/pressure/MS5837/" + this.model.name();
             this.sensorId = RestHelper.requestPost(url, "");
             return this;
         }

@@ -89,45 +89,77 @@ public class PressureSensorMS5837ServiceImpl implements PressureSensorMS5837Serv
         ThreadUtils.sleepSilently(20, TimeUnit.MILLISECONDS);
         return D2 ->
         {
-            long dT = D2 - C5 * 256;
-            long TEMP = 2000 + dT * C6 / 8388608l;
-            long OFF = C2 * 65536l + (C4 * dT) / 128l;
-            long SENS = C1 * 32768l + (C3 * dT) / 256l;
-            long T2 = 0;
-            long OFF2 = 0;
-            long SENS2 = 0;
+            if (MS5837Model.MS5837_02BA.equals(model))
+            {
+                long dT = D2 - C5 * 256;
+                long TEMP = 2000 + dT * C6 / 8388608l;
+                long OFF = C2 * 131072l + (C4 * dT) / 64l;
+                long SENS = C1 * 65536l + (C3 * dT) / 128l;
+                long T2 = 0;
+                long OFF2 = 0;
+                long SENS2 = 0;
 
-            if (TEMP >= 2000)
-            {
-                T2 = 2 * (dT * dT) / 137438953472l;
-                OFF2 = ((TEMP - 2000) * (TEMP - 2000)) / 16;
-                SENS2 = 0;
-            }
-            else if (TEMP < 2000)
-            {
-                T2 = 3 * (dT * dT) / 8589934592l;
-                OFF2 = 3 * ((TEMP - 2000) * (TEMP - 2000)) / 2;
-                SENS2 = 5 * ((TEMP - 2000) * (TEMP - 2000)) / 8;
-                if (TEMP < -1500)
+                if (TEMP < 2000)
                 {
-                    OFF2 = OFF2 + 7 * ((TEMP + 1500) * (TEMP + 1500));
-                    SENS2 = SENS2 + 4 * ((TEMP + 1500) * (TEMP + 1500));
+                    T2 = 11 * (dT * dT) / 34359738368L;
+                    OFF2 = 31 * (TEMP - 2000) ^ 2 / 8;
+                    SENS2 = 63 * (TEMP - 2000) ^ 2 / 32;
                 }
+
+                TEMP = TEMP - T2;
+                OFF = OFF - OFF2;
+                SENS = SENS - SENS2;
+                double pressureAbsolute = (((D1 * SENS) / 2097152) - OFF) / 32768 / 100.0;
+                double temperature = TEMP / 100.0;
+
+                double pressureRelative = pressureAbsolute - initalPressure;
+                return PressureAndTemperature.builder()
+                                             .pressureAbsolute(pressureAbsolute)
+                                             .pressureRelative(pressureRelative)
+                                             .temperature(temperature)
+                                             .build();
             }
+            else
+            {
+                long dT = D2 - C5 * 256;
+                long TEMP = 2000 + dT * C6 / 8388608l;
+                long OFF = C2 * 65536l + (C4 * dT) / 128l;
+                long SENS = C1 * 32768l + (C3 * dT) / 256l;
+                long T2 = 0;
+                long OFF2 = 0;
+                long SENS2 = 0;
 
-            TEMP = TEMP - T2;
-            OFF = OFF - OFF2;
-            SENS = SENS - SENS2;
-            double sensorModelCoefficient = MS5837Model.MS5837_02BA.equals(model) ? 100.0 : 10;
-            double pressureAbsolute = ((((D1 * SENS) / 2097152) - OFF) / 8192) / sensorModelCoefficient;
-            double temperature = TEMP / 100.0;
+                if (TEMP >= 2000)
+                {
+                    T2 = 2 * (dT * dT) / 137438953472l;
+                    OFF2 = ((TEMP - 2000) * (TEMP - 2000)) / 16;
+                    SENS2 = 0;
+                }
+                else if (TEMP < 2000)
+                {
+                    T2 = 3 * (dT * dT) / 8589934592l;
+                    OFF2 = 3 * ((TEMP - 2000) * (TEMP - 2000)) / 2;
+                    SENS2 = 5 * ((TEMP - 2000) * (TEMP - 2000)) / 8;
+                    if (TEMP < -1500)
+                    {
+                        OFF2 = OFF2 + 7 * ((TEMP + 1500) * (TEMP + 1500));
+                        SENS2 = SENS2 + 4 * ((TEMP + 1500) * (TEMP + 1500));
+                    }
+                }
 
-            double pressureRelative = pressureAbsolute - initalPressure;
-            return PressureAndTemperature.builder()
-                                         .pressureAbsolute(pressureAbsolute)
-                                         .pressureRelative(pressureRelative)
-                                         .temperature(temperature)
-                                         .build();
+                TEMP = TEMP - T2;
+                OFF = OFF - OFF2;
+                SENS = SENS - SENS2;
+                double pressureAbsolute = (((D1 * SENS) / 2097152) - OFF) / 8192 / 10.0;
+                double temperature = TEMP / 100.0;
+
+                double pressureRelative = pressureAbsolute - initalPressure;
+                return PressureAndTemperature.builder()
+                                             .pressureAbsolute(pressureAbsolute)
+                                             .pressureRelative(pressureRelative)
+                                             .temperature(temperature)
+                                             .build();
+            }
         };
     }
 
