@@ -3,6 +3,8 @@ package org.omnaest.pi.client;
 import java.util.function.Consumer;
 import java.util.function.LongSupplier;
 
+import org.omnaest.pi.client.domain.gpio.expander.GpioPortExpanderAddress;
+import org.omnaest.pi.client.domain.gpio.expander.GpioPortExpanderPort;
 import org.omnaest.pi.client.domain.gyro.Orientation;
 import org.omnaest.pi.client.domain.motor.MotorMovementDirection;
 import org.omnaest.pi.client.domain.pressure.MS5837Model;
@@ -23,6 +25,10 @@ public interface PiClient
 
     ServoControl forServo(int index);
 
+    ServoPinControl forServoPin(int index, int bus);
+
+    ServoPinControl forServoPin(int index);
+
     UltrasonicSensorControl forUltrasonicSensor(int index);
 
     void setValueOfPWMGPIOPort(int pin, int value);
@@ -39,6 +45,8 @@ public interface PiClient
 
     Motor motor();
 
+    GpioPortExpanderPCF8574 gpioPortExpanderPCF8574(GpioPortExpanderAddress gpioPortExpanderAddress);
+
     DisabledFlowSensor flowSensor(int pin);
 
     DisabledPressureSensorMS5837 pressureSensorMS5837(MS5837Model model);
@@ -53,6 +61,13 @@ public interface PiClient
         public PressureAndTemperature read();
 
         public DisabledPressureSensorMS5837 disable();
+    }
+
+    public static interface GpioPortExpanderPCF8574
+    {
+        public GpioPortExpanderPCF8574 write(GpioPortExpanderPort gpioPortExpanderPort, boolean value);
+
+        public boolean read(GpioPortExpanderPort gpioPortExpanderPort);
     }
 
     public static interface Motor
@@ -106,6 +121,15 @@ public interface PiClient
         public ServoControl setDurationMaximum(int max);
 
         public ServoControl setDurationNeutral(int neutral);
+    }
+
+    public static interface ServoPinControl
+    {
+        public ServoPinControl enable();
+
+        public ServoPinControl disable();
+
+        public ServoPinControl setPwmValue(double value);
     }
 
     public static interface BMP180

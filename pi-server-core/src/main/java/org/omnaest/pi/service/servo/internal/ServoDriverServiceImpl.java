@@ -6,12 +6,12 @@ import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import javax.annotation.PreDestroy;
 
 import org.omnaest.pi.service.servo.ServoDriverService;
+import org.omnaest.utils.element.cached.CachedElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,35 +26,48 @@ import com.pi4j.io.i2c.I2CBus;
 import com.pi4j.io.i2c.I2CFactory;
 import com.pi4j.io.i2c.I2CFactory.UnsupportedBusNumberException;
 
+import lombok.Builder;
+import lombok.RequiredArgsConstructor;
+
 @Service
 public class ServoDriverServiceImpl implements ServoDriverService
 {
     private static final Logger LOG = LoggerFactory.getLogger(ServoDriverServiceImpl.class);
 
-    private List<Servo>         servos;
+    private List<ServoProvider> servos;
     private PCA9685GpioProvider provider;
 
     private void ensureInitialization()
     {
-        if (this.provider == null)
+        if (this.servos == null)
         {
-            try
+            synchronized (this)
             {
-                I2CBus bus = this.newI2CBus();
-                BigDecimal frequency = new BigDecimal("48.828");
-                BigDecimal frequencyCorrectionFactor = new BigDecimal("1.0578");
-                PCA9685GpioProvider provider = this.provider = new PCA9685GpioProvider(bus, 0x40, frequency, frequencyCorrectionFactor);
-                GpioPinPwmOutput[] outputs = this.provisionPwmOutputs(provider);
-                this.resetAll(provider);
+                if (this.servos == null)
+                {
+                    try
+                    {
+                        I2CBus bus = this.newI2CBus();
+                        BigDecimal frequency = new BigDecimal("48.828");
+                        BigDecimal frequencyCorrectionFactor = new BigDecimal("1.0578");
+                        PCA9685GpioProvider provider = this.provider = new PCA9685GpioProvider(bus, 0x40, frequency, frequencyCorrectionFactor);
 
-                this.servos = IntStream.range(0, outputs.length)
-                                       .mapToObj(index -> new ServoImpl(outputs, provider, index))
-                                       .collect(Collectors.toList());
-            }
-            catch (Exception e)
-            {
-                LOG.warn("Unable to initialize I2C");
-                LOG.debug("I2C error", e);
+                        GpioController gpioController = GpioFactory.getInstance();
+                        this.servos = Stream.of(PCA9685Pin.ALL)
+                                            .map(pin -> ServoProvider.builder()
+                                                                     .gpioController(gpioController)
+                                                                     .gpioProvider(provider)
+                                                                     .pin(pin)
+                                                                     .build())
+                                            .toList();
+
+                    }
+                    catch (Exception e)
+                    {
+                        LOG.warn("Unable to initialize I2C");
+                        LOG.debug("I2C error", e);
+                    }
+                }
             }
         }
     }
@@ -62,26 +75,26 @@ public class ServoDriverServiceImpl implements ServoDriverService
     @PreDestroy
     public void destroy()
     {
-        this.provider.shutdown();
+        if (this.provider != null)
+        {
+            this.provider.shutdown();
+        }
     }
 
     @Override
     public Servo servo(int index)
     {
         this.ensureInitialization();
-        return this.servos.get(index);
+        return this.servos.get(index)
+                          .get();
     }
 
-    private void resetAll(PCA9685GpioProvider provider)
+    @Override
+    public PwmPin pwmPin(int index)
     {
-        try
-        {
-            provider.reset();
-        }
-        catch (Exception e)
-        {
-            LOG.error("Failed to reset the provider", e);
-        }
+        this.ensureInitialization();
+        return this.servos.get(index)
+                          .get();
     }
 
     private I2CBus newI2CBus() throws UnsupportedBusNumberException, IOException
@@ -108,44 +121,20 @@ public class ServoDriverServiceImpl implements ServoDriverService
                      .orElseThrow(() -> new IllegalStateException("No I2C bus available"));
     }
 
-    private GpioPinPwmOutput[] provisionPwmOutputs(final PCA9685GpioProvider gpioProvider)
+    private static interface ServoAndPwm extends Servo, PwmPin
     {
-        GpioController gpio = GpioFactory.getInstance();
-        GpioPinPwmOutput myOutputs[] = { gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_00, "Pulse 00"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_01, "Pulse 01"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_02, "Pulse 02"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_03, "Pulse 03"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_04, "Pulse 04"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_05, "Pulse 05"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_06, "Pulse 06"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_07, "Pulse 07"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_08, "Pulse 08"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_09, "Pulse 09"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_10, "Pulse 10"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_11, "Pulse 11"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_12, "Pulse 12"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_13, "Pulse 13"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_14, "Pulse 14"),
-                                         gpio.provisionPwmOutputPin(gpioProvider, PCA9685Pin.PWM_15, "Pulse 15") };
-
-        return myOutputs;
     }
 
-    private static class ServoImpl implements Servo
+    @RequiredArgsConstructor
+    private static class ServoAndPwmImpl implements ServoAndPwm
     {
-        private final GpioPinPwmOutput[]  outputs;
+        private final GpioPinPwmOutput    output;
+        private final Pin                 pin;
         private final PCA9685GpioProvider provider;
         private final int                 index;
         private int                       durationMinimum = 1;
         private int                       durationMaximum = 3200;
         private Supplier<Integer>         durationNeutral = () -> this.durationMaximum / 2;
-
-        private ServoImpl(GpioPinPwmOutput[] outputs, PCA9685GpioProvider provider, int index)
-        {
-            this.outputs = outputs;
-            this.provider = provider;
-            this.index = index;
-        }
 
         @Override
         public void applyAngle(int angle)
@@ -154,13 +143,13 @@ public class ServoDriverServiceImpl implements ServoDriverService
             {
                 LOG.debug("Set servo " + this.index + " state to angle " + angle);
 
-                this.logCurrentPWMStates(this.provider, this.outputs);
+                this.logCurrentPWMStates();
 
                 this.provider.setPwm(this.determineServoPin(this.index), this.determineServoDuration(angle));
 
                 LOG.debug("Current state (servo " + this.index + "): " + Arrays.toString(this.determineCurrentOnOffValues(this.index)));
 
-                this.logCurrentPWMStates(this.provider, this.outputs);
+                this.logCurrentPWMStates();
             }
             catch (Exception e)
             {
@@ -177,13 +166,13 @@ public class ServoDriverServiceImpl implements ServoDriverService
                 LOG.debug("Set servo " + this.index + " state to speed " + NumberFormat.getPercentInstance()
                                                                                        .format(speed));
 
-                this.logCurrentPWMStates(this.provider, this.outputs);
+                this.logCurrentPWMStates();
 
                 this.provider.setPwm(this.determineServoPin(this.index), this.determineServoDurationForSpeed(speed));
 
                 LOG.debug("Current state (servo " + this.index + "): " + Arrays.toString(this.determineCurrentOnOffValues(this.index)));
 
-                this.logCurrentPWMStates(this.provider, this.outputs);
+                this.logCurrentPWMStates();
             }
             catch (Exception e)
             {
@@ -220,22 +209,19 @@ public class ServoDriverServiceImpl implements ServoDriverService
 
         private int[] determineCurrentOnOffValues(int servoIndex)
         {
-            return this.provider.getPwmOnOffValues(this.outputs[servoIndex].getPin());
+            return this.provider.getPwmOnOffValues(this.output.getPin());
         }
 
-        private void logCurrentPWMStates(PCA9685GpioProvider provider, GpioPinPwmOutput[] outputs)
+        private void logCurrentPWMStates()
         {
             if (LOG.isDebugEnabled())
             {
-                for (GpioPinPwmOutput output : outputs)
-                {
-                    int[] onOffValues = provider.getPwmOnOffValues(output.getPin());
+                int[] onOffValues = this.provider.getPwmOnOffValues(this.output.getPin());
 
-                    String pinName = output.getPin()
-                                           .getName();
-                    String name = output.getName();
-                    LOG.debug(pinName + " (" + name + "): ON value [" + onOffValues[0] + "], OFF value [" + onOffValues[1] + "] ");
-                }
+                String pinName = this.output.getPin()
+                                            .getName();
+                String name = this.output.getName();
+                LOG.debug(pinName + " (" + name + "): ON value [" + onOffValues[0] + "], OFF value [" + onOffValues[1] + "] ");
             }
         }
 
@@ -260,6 +246,71 @@ public class ServoDriverServiceImpl implements ServoDriverService
         public void applyDurationNeutral(int neutral)
         {
             this.durationNeutral = () -> neutral;
+        }
+
+        @Override
+        public void set(boolean value)
+        {
+            if (value)
+            {
+                this.provider.setAlwaysOn(this.pin);
+            }
+            else
+            {
+                this.provider.setAlwaysOff(this.pin);
+            }
+        }
+
+        @Override
+        public void setPwm(double value)
+        {
+            int periodDurationMicros = this.provider.getPeriodDurationMicros();
+            int duration = (int) Math.round(value * periodDurationMicros);
+
+            if (duration <= 0)
+            {
+                this.disable();
+            }
+            else if (duration >= periodDurationMicros)
+            {
+                this.enable();
+            }
+            else
+            {
+                this.provider.setPwm(this.pin, duration);
+            }
+        }
+
+    }
+
+    @Builder
+    private static class ServoProvider implements Supplier<ServoAndPwm>
+    {
+        private final Pin                        pin;
+        private final GpioController             gpioController;
+        private final PCA9685GpioProvider        gpioProvider;
+        private final CachedElement<ServoAndPwm> servo = CachedElement.of(this::createServoInstance);
+
+        private ServoAndPwm createServoInstance()
+        {
+            GpioPinPwmOutput output = this.gpioController.provisionPwmOutputPin(this.gpioProvider, this.pin, this.pin.getName());
+
+            try
+            {
+                this.gpioProvider.setAlwaysOff(this.pin);
+            }
+            catch (Exception e)
+            {
+                LOG.error("Failed to reset the pin: " + this.pin.getName(), e);
+            }
+
+            return new ServoAndPwmImpl(output, this.pin, this.gpioProvider, this.pin.getAddress());
+        }
+
+        @Override
+        public ServoAndPwm get()
+        {
+            return this.servo.get();
         }
 
     }

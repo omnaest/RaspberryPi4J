@@ -8,6 +8,8 @@ import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.omnaest.pi.client.domain.flow.FlowSensorDefinition;
+import org.omnaest.pi.client.domain.gpio.expander.GpioPortExpanderAddress;
+import org.omnaest.pi.client.domain.gpio.expander.GpioPortExpanderPort;
 import org.omnaest.pi.client.domain.gyro.Orientation;
 import org.omnaest.pi.client.domain.motor.L298nMotorControlDefinition;
 import org.omnaest.pi.client.domain.motor.MotorMovementDefinition;
@@ -176,6 +178,45 @@ public class PIRemoteClient implements PiClient
                 RestHelper.requestPut(url, "" + neutral);
                 return this;
             }
+        };
+    }
+
+    @Override
+    public ServoPinControl forServoPin(int index)
+    {
+        int bus = 1;
+        return this.forServoPin(index, bus);
+    }
+
+    @Override
+    public ServoPinControl forServoPin(int index, int bus)
+    {
+        return new ServoPinControl()
+        {
+            @Override
+            public ServoPinControl enable()
+            {
+                String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/servo/" + bus + "/" + index + "/pin";
+                RestHelper.requestPut(url, "");
+                return this;
+            }
+
+            @Override
+            public ServoPinControl disable()
+            {
+                String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/servo/" + bus + "/" + index + "/pin";
+                RestHelper.requestDelete(url);
+                return this;
+            }
+
+            @Override
+            public ServoPinControl setPwmValue(double value)
+            {
+                String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/servo/" + bus + "/" + index + "/pin/pwm";
+                RestHelper.requestPut(url, String.valueOf(value));
+                return this;
+            }
+
         };
     }
 
@@ -536,6 +577,30 @@ public class PIRemoteClient implements PiClient
                 return this;
             }
 
+        };
+    }
+
+    @Override
+    public GpioPortExpanderPCF8574 gpioPortExpanderPCF8574(GpioPortExpanderAddress address)
+    {
+        return new GpioPortExpanderPCF8574()
+        {
+            @Override
+            public GpioPortExpanderPCF8574 write(GpioPortExpanderPort port, boolean value)
+            {
+                String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/gpio/expander/PCF8574/" + address.name() + "/"
+                        + port.name();
+                RestHelper.requestPut(url, JSONHelper.prettyPrint(value));
+                return this;
+            }
+
+            @Override
+            public boolean read(GpioPortExpanderPort port)
+            {
+                String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/gpio/expander/PCF8574/" + address.name() + "/"
+                        + port.name();
+                return BooleanUtils.toBoolean(RestHelper.requestGet(url));
+            }
         };
     }
 

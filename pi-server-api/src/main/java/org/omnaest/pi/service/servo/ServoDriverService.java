@@ -2,10 +2,8 @@ package org.omnaest.pi.service.servo;
 
 public interface ServoDriverService
 {
-    /**
-     * @param index
-     * @return
-     */
+    public PwmPin pwmPin(int index);
+
     public Servo servo(int index);
 
     public static interface Servo
@@ -19,6 +17,24 @@ public interface ServoDriverService
         public void applyDurationMaximum(int max);
 
         public void applyDurationNeutral(int neutral);
+
+    }
+
+    public static interface PwmPin
+    {
+        public void set(boolean value);
+
+        public default void enable()
+        {
+            this.set(true);
+        }
+
+        public default void disable()
+        {
+            this.set(false);
+        }
+
+        public void setPwm(double value);
 
     }
 }

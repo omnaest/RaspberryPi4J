@@ -21,6 +21,8 @@ package org.omnaest.pi.controller;
 import java.util.Optional;
 
 import org.omnaest.pi.client.domain.flow.FlowSensorDefinition;
+import org.omnaest.pi.client.domain.gpio.expander.GpioPortExpanderAddress;
+import org.omnaest.pi.client.domain.gpio.expander.GpioPortExpanderPort;
 import org.omnaest.pi.client.domain.gyro.Orientation;
 import org.omnaest.pi.client.domain.motor.L298nMotorControlDefinition;
 import org.omnaest.pi.client.domain.motor.MotorMovementDefinition;
@@ -36,6 +38,7 @@ import org.omnaest.pi.service.UltrasonicService;
 import org.omnaest.pi.service.compass.CompassService;
 import org.omnaest.pi.service.compass.CompassService.Module;
 import org.omnaest.pi.service.gpio.GPIOService;
+import org.omnaest.pi.service.gpio.expander.GpioPortExpanderPCF8574Service;
 import org.omnaest.pi.service.i2c.I2CService;
 import org.omnaest.pi.service.i2c.I2CService.ByteArray;
 import org.omnaest.pi.service.motor.MotorControlService;
@@ -86,6 +89,9 @@ public class DataController
     private I2CService i2cService;
 
     @Autowired
+    private GpioPortExpanderPCF8574Service gpioPortExpanderPCF8574Service;
+
+    @Autowired
     private MotorControlService motorControlService;
 
     @Autowired
@@ -103,7 +109,7 @@ public class DataController
         return this.cameraService.takeSnapshot(cameraSnapshotOptions);
     }
 
-    @RequestMapping(method = RequestMethod.PUT, path = "/gpio/{port}/digital/output/enable")
+    @PutMapping("/gpio/{port}/digital/output/enable")
     public void enableGPIODigitalOutput(@PathVariable("port") int port)
     {
         this.gpioService.enableGPIOPortForDigitalOutput(port);
@@ -117,7 +123,7 @@ public class DataController
                                .getState();
     }
 
-    @RequestMapping(method = RequestMethod.PUT, path = "/gpio/{port}/digital/output")
+    @PutMapping("/gpio/{port}/digital/output")
     public void setGPIODigitalOutput(@PathVariable("port") int port, @RequestBody boolean state)
     {
         this.gpioService.getDigitalOutputGPIOPort(port)
@@ -125,60 +131,81 @@ public class DataController
                         .setState(state);
     }
 
-    @RequestMapping(method = RequestMethod.PUT, path = "/gpio/{port}/pwm")
+    @PutMapping("/gpio/{port}/pwm")
     public void enableGPIOPWMOutput(@PathVariable("port") int port)
     {
         this.gpioService.enableGPIOPortForPWM(port);
     }
 
-    @RequestMapping(method = RequestMethod.PUT, path = "/gpio/{port}/state/{active}")
+    @PutMapping("/gpio/{port}/state/{active}")
     public void enableGPIOPort(@PathVariable("port") int port, @PathVariable("active") boolean active)
     {
         this.gpioService.enableGPIOPort(port, active);
     }
 
-    @RequestMapping(method = RequestMethod.PUT, path = "/gpio/{port}/pwm/{value}")
+    @PutMapping("/gpio/{port}/pwm/{value}")
     public void setGPIOPortPWMValue(@PathVariable("port") int port, @PathVariable("value") int value)
     {
         this.gpioService.setGPIOPortPWMValue(port, value);
     }
 
-    @RequestMapping(method = RequestMethod.PUT, path = "/servo/{bus}/{index}/angle")
+    @PutMapping("/servo/{bus}/{index}/angle")
     public void setServoAngle(@PathVariable("index") int servoIndex, @RequestBody int angle)
     {
         this.servoDriverService.servo(servoIndex)
                                .applyAngle(angle);
     }
 
-    @RequestMapping(method = RequestMethod.PUT, path = "/servo/{bus}/{index}/speed")
+    @PutMapping("/servo/{bus}/{index}/speed")
     public void setServoSpeed(@PathVariable("index") int servoIndex, @RequestBody double speed)
     {
         this.servoDriverService.servo(servoIndex)
                                .applySpeed(speed);
     }
 
-    @RequestMapping(method = RequestMethod.PUT, path = "/servo/{bus}/{index}/state/maximum")
+    @PutMapping("/servo/{bus}/{index}/pin")
+    public void enableServoPin(@PathVariable("index") int servoIndex)
+    {
+        this.servoDriverService.pwmPin(servoIndex)
+                               .enable();
+    }
+
+    @PutMapping("/servo/{bus}/{index}/pin/pwm")
+    public void setServoPwmPin(@PathVariable("index") int servoIndex, @RequestBody double value)
+    {
+        this.servoDriverService.pwmPin(servoIndex)
+                               .setPwm(value);
+    }
+
+    @DeleteMapping("/servo/{bus}/{index}/pin")
+    public void disableServoPin(@PathVariable("index") int servoIndex)
+    {
+        this.servoDriverService.pwmPin(servoIndex)
+                               .disable();
+    }
+
+    @PutMapping("/servo/{bus}/{index}/state/maximum")
     public void setServoDurationMaximum(@PathVariable("index") int servoIndex, @RequestBody int max)
     {
         this.servoDriverService.servo(servoIndex)
                                .applyDurationMaximum(max);
     }
 
-    @RequestMapping(method = RequestMethod.PUT, path = "/servo/{bus}/{index}/state/minimum")
+    @PutMapping("/servo/{bus}/{index}/state/minimum")
     public void setServoDurationMinimum(@PathVariable("index") int servoIndex, @RequestBody int min)
     {
         this.servoDriverService.servo(servoIndex)
                                .applyDurationMinimum(min);
     }
 
-    @RequestMapping(method = RequestMethod.PUT, path = "/servo/{bus}/{index}/state/neutral")
+    @PutMapping("/servo/{bus}/{index}/state/neutral")
     public void setServoDurationNeutral(@PathVariable("index") int servoIndex, @RequestBody int neutral)
     {
         this.servoDriverService.servo(servoIndex)
                                .applyDurationNeutral(neutral);
     }
 
-    @RequestMapping(method = RequestMethod.PUT, path = "/sensor/ultrasonic/{index}")
+    @PutMapping("/sensor/ultrasonic/{index}")
     public void initUltrasonicSensor(@PathVariable("index") int index, @RequestBody UltrasonicSensorConfiguration configuration)
     {
         this.ultrasonicService.getInstance(index)
@@ -307,6 +334,21 @@ public class DataController
     public void disablePressureSensorMS5837(@PathVariable(name = "sensorId") String sensorId)
     {
         this.pressureSensorMS5837Service.disableSensor(sensorId);
+    }
+
+    @PutMapping(path = "/gpio/expander/PCF8574/{address}/{port}")
+    public void setGpioExpanderPort(@PathVariable(name = "address") GpioPortExpanderAddress address, @PathVariable(name = "port") GpioPortExpanderPort port,
+                                    @RequestBody boolean value)
+    {
+        this.gpioPortExpanderPCF8574Service.access(address)
+                                           .write(port, value);
+    }
+
+    @GetMapping(path = "/gpio/expander/PCF8574/{address}/{port}")
+    public boolean getGpioExpanderPort(@PathVariable(name = "address") GpioPortExpanderAddress address, @PathVariable(name = "port") GpioPortExpanderPort port)
+    {
+        return this.gpioPortExpanderPCF8574Service.access(address)
+                                                  .read(port);
     }
 
 }
