@@ -142,7 +142,7 @@ public interface GPIOService
             @Override
             public String toString()
             {
-                return "DigitalInputPinStateChange [previous=" + previous + ", current=" + current + "]";
+                return "DigitalInputPinStateChange [previous=" + this.previous + ", current=" + this.current + "]";
             }
 
         }
@@ -170,6 +170,14 @@ public interface GPIOService
          * @return
          */
         public DigitalOutputGPIOPort setState(boolean active);
+
+        /**
+         * Returns true, if the {@link DigitalOutputGPIOPort} is enabled.
+         * 
+         * @see #enable()
+         * @return
+         */
+        public boolean isEnabled();
     }
 
     public static interface PwmGPIOPort

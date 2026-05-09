@@ -18,8 +18,10 @@
 */
 package org.omnaest.pi.controller;
 
+import java.util.List;
 import java.util.Optional;
 
+import org.omnaest.pi.client.PiClient.Interaction;
 import org.omnaest.pi.client.domain.flow.FlowSensorDefinition;
 import org.omnaest.pi.client.domain.gpio.expander.GpioPortExpanderAddress;
 import org.omnaest.pi.client.domain.gpio.expander.GpioPortExpanderPort;
@@ -47,7 +49,13 @@ import org.omnaest.pi.service.rotary.RotaryEncoderService;
 import org.omnaest.pi.service.sensor.flow.FlowSensorService;
 import org.omnaest.pi.service.sensor.gyro.GyroscopeService;
 import org.omnaest.pi.service.sensor.pressure.PressureSensorMS5837Service;
+import org.omnaest.pi.service.sensor.weight.WeightService;
+import org.omnaest.pi.service.sensor.weight.WeightService.Gain;
+import org.omnaest.pi.service.sensor.weight.WeightService.HX711PortConfiguration;
 import org.omnaest.pi.service.servo.ServoDriverService;
+import org.omnaest.utils.ClassUtils;
+import org.omnaest.utils.proxy.ProxyRecorderUtils;
+import org.omnaest.utils.proxy.ProxyRecorderUtils.ProxyRecording;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -64,6 +72,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class DataController
 {
+    @Autowired
+    private List<Interaction> interactions;
+
     @Autowired
     private CameraService cameraService;
 
@@ -99,6 +110,9 @@ public class DataController
 
     @Autowired
     private PressureSensorMS5837Service pressureSensorMS5837Service;
+
+    @Autowired
+    private WeightService weightService;
 
     @Autowired
     private EnvironmentService environmentService;
@@ -336,6 +350,16 @@ public class DataController
         this.pressureSensorMS5837Service.disableSensor(sensorId);
     }
 
+    @GetMapping(path = "/sensor/weight/HX711/{dataPort}/{clockPort}/{gain}")
+    public long getValueFromWeightSensorHX711(@PathVariable int dataPort, @PathVariable int clockPort, @PathVariable Gain gain)
+    {
+        return this.weightService.readValueFromHX711(HX711PortConfiguration.builder()
+                                                                           .dataPort(dataPort)
+                                                                           .clockPort(clockPort)
+                                                                           .gain(gain)
+                                                                           .build());
+    }
+
     @PutMapping(path = "/gpio/expander/PCF8574/{address}/{port}")
     public void setGpioExpanderPort(@PathVariable(name = "address") GpioPortExpanderAddress address, @PathVariable(name = "port") GpioPortExpanderPort port,
                                     @RequestBody boolean value)
@@ -351,4 +375,14 @@ public class DataController
                                                   .read(port);
     }
 
+    @PostMapping(path = "/interaction")
+    public Object interact(@RequestBody ProxyRecording recording)
+    {
+        return ClassUtils.findClassByName(recording.getType())
+                         .flatMap(type -> this.interactions.stream()
+                                                           .filter(interaction -> type.isInstance(interaction))
+                                                           .findFirst())
+                         .map(ProxyRecorderUtils.interpreter()
+                                                .useRecording(recording)::andInvokeOn);
+    }
 }

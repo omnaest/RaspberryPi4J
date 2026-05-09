@@ -18,91 +18,89 @@
 */
 package org.omnaest.pi.domain;
 
-import com.hopding.jrpicam.enums.Exposure;
-
 public class CameraSnapshotOptions
 {
-	private int			width;
-	private int			height;
-	private int			brightness;
-	private Exposure	exposure;
-	private int			timeout;
-	private boolean		rawBayer;
-
-	public CameraSnapshotOptions(int width, int height, int brightness, Exposure exposure, int timeout, boolean rawBayer)
-	{
-		super();
-		this.width = width;
-		this.height = height;
-		this.brightness = brightness;
-		this.exposure = exposure;
-		this.timeout = timeout;
-		this.rawBayer = rawBayer;
-	}
-
-	public CameraSnapshotOptions()
-	{
-		super();
-	}
-
-	public void setWidth(int width)
-	{
-		this.width = width;
-	}
-
-	public void setHeight(int height)
-	{
-		this.height = height;
-	}
-
-	public void setBrightness(int brightness)
-	{
-		this.brightness = brightness;
-	}
-
-	public void setExposure(Exposure exposure)
-	{
-		this.exposure = exposure;
-	}
-
-	public void setTimeout(int timeout)
-	{
-		this.timeout = timeout;
-	}
-
-	public void setRawBayer(boolean rawBayer)
-	{
-		this.rawBayer = rawBayer;
-	}
-
-	public int getWidth()
-	{
-		return this.width;
-	}
-
-	public int getHeight()
-	{
-		return this.height;
-	}
-
-	public int getBrightness()
-	{
-		return this.brightness;
-	}
-
-	public Exposure getExposure()
-	{
-		return this.exposure;
-	}
-
-	public int getTimeout()
-	{
-		return this.timeout;
-	}
-
-	public boolean isRawBayer()
-	{
-		return this.rawBayer;
-	}
+    //	private int			width;
+    //	private int			height;
+    //	private int			brightness;
+    //	private Exposure	exposure;
+    //	private int			timeout;
+    //	private boolean		rawBayer;
+    //
+    //	public CameraSnapshotOptions(int width, int height, int brightness, Exposure exposure, int timeout, boolean rawBayer)
+    //	{
+    //		super();
+    //		this.width = width;
+    //		this.height = height;
+    //		this.brightness = brightness;
+    //		this.exposure = exposure;
+    //		this.timeout = timeout;
+    //		this.rawBayer = rawBayer;
+    //	}
+    //
+    //	public CameraSnapshotOptions()
+    //	{
+    //		super();
+    //	}
+    //
+    //	public void setWidth(int width)
+    //	{
+    //		this.width = width;
+    //	}
+    //
+    //	public void setHeight(int height)
+    //	{
+    //		this.height = height;
+    //	}
+    //
+    //	public void setBrightness(int brightness)
+    //	{
+    //		this.brightness = brightness;
+    //	}
+    //
+    //	public void setExposure(Exposure exposure)
+    //	{
+    //		this.exposure = exposure;
+    //	}
+    //
+    //	public void setTimeout(int timeout)
+    //	{
+    //		this.timeout = timeout;
+    //	}
+    //
+    //	public void setRawBayer(boolean rawBayer)
+    //	{
+    //		this.rawBayer = rawBayer;
+    //	}
+    //
+    //	public int getWidth()
+    //	{
+    //		return this.width;
+    //	}
+    //
+    //	public int getHeight()
+    //	{
+    //		return this.height;
+    //	}
+    //
+    //	public int getBrightness()
+    //	{
+    //		return this.brightness;
+    //	}
+    //
+    //	public Exposure getExposure()
+    //	{
+    //		return this.exposure;
+    //	}
+    //
+    //	public int getTimeout()
+    //	{
+    //		return this.timeout;
+    //	}
+    //
+    //	public boolean isRawBayer()
+    //	{
+    //		return this.rawBayer;
+    //	}
 
 }

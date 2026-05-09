@@ -198,6 +198,7 @@ public class GPIOServiceImpl implements GPIOService
                 portToDigitalOutputPin.computeIfPresent(port, (digitalPort, pin) ->
                 {
                     gpioController.unexport(pin);
+                    gpioController.unprovisionPin(pin);
                     LOG.info("Disabled port " + digitalPort + " for digital output");
                     return null;
                 });
@@ -220,6 +221,24 @@ public class GPIOServiceImpl implements GPIOService
                 gpioController.setState(active, pin);
                 LOG.info("Sets the state for digital output port " + port + " to " + active);
                 return this;
+            }
+
+            @Override
+            public boolean isEnabled()
+            {
+                return portToDigitalOutputPin.containsKey(port);
+            }
+
+            @Override
+            public String toString()
+            {
+                StringBuilder builder = new StringBuilder();
+                builder.append("DigitalOutputGPIOPortImpl [port=")
+                       .append(port)
+                       .append(", enabled=")
+                       .append(this.isEnabled())
+                       .append("]");
+                return builder.toString();
             }
         };
     }
@@ -301,6 +320,7 @@ public class GPIOServiceImpl implements GPIOService
                 pin.removeAllListeners();
                 pin.removeAllTriggers();
                 this.gpioController.unexport(pin);
+                this.gpioController.unprovisionPin(pin);
                 this.enabled = false;
                 LOG.info("Disabled port " + digitalPort + " for digital input");
                 return null;
@@ -357,6 +377,19 @@ public class GPIOServiceImpl implements GPIOService
             });
             return this;
         }
+
+        @Override
+        public String toString()
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.append("DigitalInputGPIOPortImpl [port=")
+                   .append(this.port)
+                   .append(", enabled=")
+                   .append(this.enabled)
+                   .append("]");
+            return builder.toString();
+        }
+
     }
 
 }

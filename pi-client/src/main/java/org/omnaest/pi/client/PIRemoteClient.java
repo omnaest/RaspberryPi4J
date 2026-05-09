@@ -16,7 +16,13 @@ import org.omnaest.pi.client.domain.motor.MotorMovementDefinition;
 import org.omnaest.pi.client.domain.motor.MotorMovementDirection;
 import org.omnaest.pi.client.domain.pressure.MS5837Model;
 import org.omnaest.pi.client.domain.pressure.PressureAndTemperature;
+import org.omnaest.pi.client.domain.weight.HX711Definition;
+import org.omnaest.pi.client.domain.weight.Nau7802Definition;
 import org.omnaest.utils.JSONHelper;
+import org.omnaest.utils.JsonUtils;
+import org.omnaest.utils.MatcherUtils;
+import org.omnaest.utils.proxy.ProxyRecorderUtils;
+import org.omnaest.utils.proxy.ProxyRecorderUtils.ProxyRecording;
 import org.omnaest.utils.rest.client.RestHelper;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -694,4 +700,85 @@ public class PIRemoteClient implements PiClient
                            .orElse(0.0);
         }
     }
+
+    @Override
+    public Nau7802Definition weightSensorNAU7802()
+    {
+        return this.createInteractionProxy(Nau7802Definition.class);
+    }
+
+    private Nau7802Definition createInteractionProxy(Class<Nau7802Definition> proxyType)
+    {
+        return ProxyRecorderUtils.recorder()
+                                 .createRecordingProxy(proxyType, recording -> recording.andRemotelyInvokeTyped(this::interact));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <R> R interact(ProxyRecording data, Class<?> type)
+    {
+        String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/interaction";
+        return (R) JsonUtils.deserializer(type)
+                            .apply(RestHelper.requestPost(url, JsonUtils.serialize(data)));
+    }
+
+    @Override
+    public HX711Definition weightSensorHX711()
+    {
+        return new HX711Definition()
+        {
+            private final static int UNDEFINED_PORT = -1;
+            private Gain             gain           = Gain.CHANNEL_A_HIGH;
+            private int              dataPort       = UNDEFINED_PORT;
+            private int              clockPort      = UNDEFINED_PORT;
+
+            @Override
+            public HX711Definition usingDataPort(int dataPort)
+            {
+                this.dataPort = dataPort;
+                return this;
+            }
+
+            @Override
+            public HX711Definition usingClockPort(int clockPort)
+            {
+                this.clockPort = clockPort;
+                return this;
+            }
+
+            @Override
+            public long readValue()
+            {
+                this.validatePort(this.dataPort, "dataPort must be defined");
+                this.validatePort(this.clockPort, "clockPort must be defined");
+
+                String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + MatcherUtils.replacer()
+                                                                                                                 .addExactMatchReplacement("{dataPort}",
+                                                                                                                                           String.valueOf(this.dataPort))
+                                                                                                                 .addExactMatchReplacement("{clockPort}",
+                                                                                                                                           String.valueOf(this.clockPort))
+                                                                                                                 .addExactMatchReplacement("{gain}",
+                                                                                                                                           this.gain.name())
+                                                                                                                 .findAndReplaceAllIn("/sensor/weight/HX711/{dataPort}/{clockPort}/{gain}");
+                return Optional.ofNullable(RestHelper.requestGet(url))
+                               .map(NumberUtils::toLong)
+                               .orElse(0l);
+            }
+
+            private void validatePort(int port, String message)
+            {
+                if (port <= UNDEFINED_PORT)
+                {
+                    throw new IllegalArgumentException(message);
+                }
+            }
+
+            @Override
+            public HX711Definition usingGain(Gain gain)
+            {
+                this.gain = gain;
+                return this;
+            }
+        };
+    }
+
 }
