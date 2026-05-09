@@ -475,7 +475,7 @@ public class WeightServiceImpl implements WeightService
             log.info("Cycle bit after read: " + accessor.getPUCycleReadyBit()
                                                         .readValue());
 
-            return registerBits.readAsSignedInteger();
+            return registerBits.readAsBigEndianSignedInteger();
         }
 
         private void enable(Nau7802I2CAccessor accessor)

@@ -164,16 +164,31 @@ public interface I2CService
          * 
          * @return
          */
-        public int readAsUnsignedInteger();
+        public int readAsBigEndianUnsignedInteger();
+
+        /**
+         * Reads the {@link RegisterBits} as unsigned integer by less significant byte to most significant byte
+         * 
+         * @return
+         */
+        public int readAsLittleEndianUnsignedInteger();
 
         /**
          * Reads the {@link RegisterBits} as signed integer by most significant byte to less significant byte
          * 
          * @return
          */
-        public int readAsSignedInteger();
+        public int readAsBigEndianSignedInteger();
 
         public RegisterBits write(Bits bits);
+
+        /**
+         * Writes the bits of the given int value.
+         * 
+         * @param value
+         * @return
+         */
+        public RegisterBits write(int value);
     }
 
     public static interface I2CBusControl

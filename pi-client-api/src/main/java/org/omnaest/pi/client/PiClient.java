@@ -7,6 +7,7 @@ import org.omnaest.pi.client.domain.gpio.expander.GpioPortExpanderAddress;
 import org.omnaest.pi.client.domain.gpio.expander.GpioPortExpanderPort;
 import org.omnaest.pi.client.domain.gyro.Orientation;
 import org.omnaest.pi.client.domain.motor.MotorMovementDirection;
+import org.omnaest.pi.client.domain.pressure.LPS28Definition;
 import org.omnaest.pi.client.domain.pressure.MS5837Model;
 import org.omnaest.pi.client.domain.pressure.PressureAndTemperature;
 import org.omnaest.pi.client.domain.weight.HX711Definition;
@@ -56,6 +57,8 @@ public interface PiClient
     HX711Definition weightSensorHX711();
 
     Nau7802Definition weightSensorNAU7802();
+
+    LPS28Definition pressureSensorLPS28();
 
     public static interface DisabledPressureSensorMS5837
     {

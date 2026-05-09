@@ -17,7 +17,6 @@ public class BitNumberUtils
 {
     public static int mapBitsFromMsbToLsbAsSignedInteger(Bits bits)
     {
-        System.out.println(bits.toBinaryString());
         int unsignedInteger = mapBitsFromMsbToLsbAsUnsignedInteger(bits);
 
         Bits unsignedIntegerBits = Bits.of(unsignedInteger);
@@ -39,6 +38,14 @@ public class BitNumberUtils
                        .orElse(0);
     }
 
+    public static int mapBitsFromLsbToMsbAsUnsignedInteger(Bits bits)
+    {
+        return Optional.ofNullable(bits)
+                       .map(BitNumberUtils::asLongFromLsbToMsb)
+                       .map(Long::intValue)
+                       .orElse(0);
+    }
+
     public static long asLongFromMsbToLsb(Bits bits)
     {
         long result = 0;
@@ -51,5 +58,10 @@ public class BitNumberUtils
             }
         }
         return result;
+    }
+
+    public static long asLongFromLsbToMsb(Bits bits)
+    {
+        return bits.toLong();
     }
 }

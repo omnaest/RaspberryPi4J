@@ -222,13 +222,19 @@ public class I2CServiceImpl implements I2CService
                         }
 
                         @Override
-                        public int readAsUnsignedInteger()
+                        public RegisterBits write(int value)
+                        {
+                            return this.write(Bits.of(value));
+                        }
+
+                        @Override
+                        public int readAsBigEndianUnsignedInteger()
                         {
                             return BitNumberUtils.mapBitsFromMsbToLsbAsUnsignedInteger(this.read());
                         }
 
                         @Override
-                        public int readAsSignedInteger()
+                        public int readAsBigEndianSignedInteger()
                         {
                             return BitNumberUtils.mapBitsFromMsbToLsbAsSignedInteger(this.read());
                         }
@@ -248,6 +254,12 @@ public class I2CServiceImpl implements I2CService
                                                    .map(Bits::of)
                                                    .orElse(Bits.newInstance()
                                                                .setLength(numberOfBytes * 8));
+                        }
+
+                        @Override
+                        public int readAsLittleEndianUnsignedInteger()
+                        {
+                            return BitNumberUtils.mapBitsFromLsbToMsbAsUnsignedInteger(this.read());
                         }
                     };
                 }

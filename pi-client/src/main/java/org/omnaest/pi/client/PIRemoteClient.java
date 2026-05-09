@@ -14,9 +14,11 @@ import org.omnaest.pi.client.domain.gyro.Orientation;
 import org.omnaest.pi.client.domain.motor.L298nMotorControlDefinition;
 import org.omnaest.pi.client.domain.motor.MotorMovementDefinition;
 import org.omnaest.pi.client.domain.motor.MotorMovementDirection;
+import org.omnaest.pi.client.domain.pressure.LPS28Definition;
 import org.omnaest.pi.client.domain.pressure.MS5837Model;
 import org.omnaest.pi.client.domain.pressure.PressureAndTemperature;
 import org.omnaest.pi.client.domain.weight.HX711Definition;
+import org.omnaest.pi.client.domain.weight.HX711Definition.Gain;
 import org.omnaest.pi.client.domain.weight.Nau7802Definition;
 import org.omnaest.utils.JSONHelper;
 import org.omnaest.utils.JsonUtils;
@@ -707,7 +709,13 @@ public class PIRemoteClient implements PiClient
         return this.createInteractionProxy(Nau7802Definition.class);
     }
 
-    private Nau7802Definition createInteractionProxy(Class<Nau7802Definition> proxyType)
+    @Override
+    public LPS28Definition pressureSensorLPS28()
+    {
+        return this.createInteractionProxy(LPS28Definition.class);
+    }
+
+    private <P> P createInteractionProxy(Class<P> proxyType)
     {
         return ProxyRecorderUtils.recorder()
                                  .createRecordingProxy(proxyType, recording -> recording.andRemotelyInvokeTyped(this::interact));
