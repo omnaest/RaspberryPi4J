@@ -9,7 +9,7 @@ import lombok.Value;
 public interface WeightService
 {
     /**
-     * Reads the raw (uncalibrated) value of the NAU7802 sensor using the given {@link HX711PortConfiguration}
+     * Reads the raw (uncalibrated) value of the NAU7802 sensor
      * 
      * @param bus
      * @return
