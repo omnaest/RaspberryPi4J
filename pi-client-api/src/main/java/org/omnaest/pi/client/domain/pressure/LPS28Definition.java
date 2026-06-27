@@ -13,6 +13,34 @@ public interface LPS28Definition
 
     public double readPressure();
 
+    public double readTemperature();
+
+    /**
+     * @see #usingPrimaryAddress()
+     * @see #usingSecondaryAddress()
+     * @param address
+     * @return
+     */
+    public LPS28Definition usingAddress(int address);
+
+    /**
+     * Using 0x5D as address
+     * 
+     * @see #usingPrimaryAddress()
+     * @see #usingAddress(int)
+     * @return
+     */
+    public LPS28Definition usingSecondaryAddress();
+
+    /**
+     * Using 0x5C as address
+     * 
+     * @see #usingSecondaryAddress()
+     * @see #usingAddress(int)
+     * @return
+     */
+    public LPS28Definition usingPrimaryAddress();
+
     public static enum PressureScale
     {
         _4060HPA, _1260HPA

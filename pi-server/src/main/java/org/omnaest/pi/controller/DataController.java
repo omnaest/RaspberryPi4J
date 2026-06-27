@@ -73,49 +73,49 @@ import org.springframework.web.bind.annotation.RestController;
 public class DataController
 {
     @Autowired
-    private List<Interaction> interactions;
+    private List<Interaction>              interactions;
 
     @Autowired
-    private CameraService cameraService;
+    private CameraService                  cameraService;
 
     @Autowired
-    private GPIOService gpioService;
+    private GPIOService                    gpioService;
 
     @Autowired
-    private ServoDriverService servoDriverService;
+    private ServoDriverService             servoDriverService;
 
     @Autowired
-    private UltrasonicService ultrasonicService;
+    private UltrasonicService              ultrasonicService;
 
     @Autowired
-    private RotaryEncoderService rotaryEncoderService;
+    private RotaryEncoderService           rotaryEncoderService;
 
     @Autowired
-    private CompassService compassService;
+    private CompassService                 compassService;
 
     @Autowired
-    private GyroscopeService gyroscopeService;
+    private GyroscopeService               gyroscopeService;
 
     @Autowired
-    private I2CService i2cService;
+    private I2CService                     i2cService;
 
     @Autowired
     private GpioPortExpanderPCF8574Service gpioPortExpanderPCF8574Service;
 
     @Autowired
-    private MotorControlService motorControlService;
+    private MotorControlService            motorControlService;
 
     @Autowired
-    private FlowSensorService flowSensorService;
+    private FlowSensorService              flowSensorService;
 
     @Autowired
-    private PressureSensorMS5837Service pressureSensorMS5837Service;
+    private PressureSensorMS5837Service    pressureSensorMS5837Service;
 
     @Autowired
-    private WeightService weightService;
+    private WeightService                  weightService;
 
     @Autowired
-    private EnvironmentService environmentService;
+    private EnvironmentService             environmentService;
 
     @RequestMapping(method = RequestMethod.POST, path = "/snapshot")
     public CameraSnapshot getTemperatureData(@RequestBody CameraSnapshotOptions cameraSnapshotOptions)
@@ -257,15 +257,13 @@ public class DataController
     }
 
     @RequestMapping(method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE, path = "/sensor/gyroscope/i2c/orientation")
-    public Orientation getGyroscopeOrientation(@RequestParam(name = "bus", defaultValue = "1") int bus,
-                                               @RequestParam(name = "numberOfSamplings", defaultValue = "1") int numberOfSamplings)
+    public Orientation getGyroscopeOrientation(@RequestParam(name = "bus", defaultValue = "1") int bus, @RequestParam(name = "numberOfSamplings", defaultValue = "1") int numberOfSamplings)
     {
         return this.gyroscopeService.getOrientation(numberOfSamplings);
     }
 
     @RequestMapping(method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE, path = "/i2c/bus/{bus}/address/{address}/{localaddress}/offset/{offset}")
-    public byte getI2CData(@PathVariable(name = "bus") int bus, @RequestParam(name = "address", defaultValue = "0") int address,
-                           @PathVariable(name = "localaddress") int localaddress, @PathVariable(name = "offset") int offset)
+    public byte getI2CData(@PathVariable(name = "bus") int bus, @RequestParam(name = "address", defaultValue = "0") int address, @PathVariable(name = "localaddress") int localaddress, @PathVariable(name = "offset") int offset)
     {
         return this.i2cService.provision(bus)
                               .flatMap(control -> control.connectTo(address))
@@ -275,8 +273,7 @@ public class DataController
     }
 
     @PutMapping(path = "/i2c/bus/{bus}/address/{address}/{localaddress}/offset/{offset}")
-    public void getI2CData(@PathVariable(name = "bus") int bus, @RequestParam(name = "address", defaultValue = "0") int address,
-                           @PathVariable(name = "localaddress") int localaddress, @PathVariable(name = "offset") int offset, @RequestBody byte value)
+    public void getI2CData(@PathVariable(name = "bus") int bus, @RequestParam(name = "address", defaultValue = "0") int address, @PathVariable(name = "localaddress") int localaddress, @PathVariable(name = "offset") int offset, @RequestBody byte value)
     {
         this.i2cService.provision(bus)
                        .flatMap(control -> control.connectTo(address))
@@ -361,8 +358,7 @@ public class DataController
     }
 
     @PutMapping(path = "/gpio/expander/PCF8574/{address}/{port}")
-    public void setGpioExpanderPort(@PathVariable(name = "address") GpioPortExpanderAddress address, @PathVariable(name = "port") GpioPortExpanderPort port,
-                                    @RequestBody boolean value)
+    public void setGpioExpanderPort(@PathVariable(name = "address") GpioPortExpanderAddress address, @PathVariable(name = "port") GpioPortExpanderPort port, @RequestBody boolean value)
     {
         this.gpioPortExpanderPCF8574Service.access(address)
                                            .write(port, value);
