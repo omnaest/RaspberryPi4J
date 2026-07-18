@@ -18,6 +18,6 @@ public class MotorMovementDefinition
     private MotorMovementDirection direction;
 
     @JsonProperty
-    private double speed;
+    private double                 speed;
 
 }

@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PressureSensorMS5837ServiceImpl implements PressureSensorMS5837Service
 {
     @Autowired
-    private I2CService i2cService;
+    private I2CService                               i2cService;
 
     private final Map<String, PressureSensorContext> sensorIdToContext = new ConcurrentHashMap<>();
 

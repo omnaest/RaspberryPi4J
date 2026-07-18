@@ -20,10 +20,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class GyroscopeServiceImpl implements GyroscopeService
 {
-    private static final Logger LOG = LoggerFactory.getLogger(GyroscopeServiceImpl.class);
+    private static final Logger              LOG       = LoggerFactory.getLogger(GyroscopeServiceImpl.class);
 
     @Autowired
-    private I2CService i2cService;
+    private I2CService                       i2cService;
 
     private final AtomicReference<Gyroscope> gyroscope = new AtomicReference<>();
 
@@ -145,13 +145,7 @@ public class GyroscopeServiceImpl implements GyroscopeService
     private static enum ReadRegister
     {
         ACCELERATION_X(59,
-                60),
-        ACCELERATION_Y(61, 62),
-        ACCELERATION_Z(63, 64),
-        TEMPERATURE(65, 66),
-        GYROSCOPE_X(67, 68),
-        GYROSCOPE_Y(69, 70),
-        GYROSCOPE_Z(71, 72);
+                60), ACCELERATION_Y(61, 62), ACCELERATION_Z(63, 64), TEMPERATURE(65, 66), GYROSCOPE_X(67, 68), GYROSCOPE_Y(69, 70), GYROSCOPE_Z(71, 72);
 
         private int highAddress;
         private int lowAddress;

@@ -5,10 +5,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class BMP180Measurement
 {
     @JsonProperty
-    private double altitude;
+    private double      altitude;
 
     @JsonProperty
-    private double pressure;
+    private double      pressure;
 
     @JsonProperty
     private Temperature temperature;

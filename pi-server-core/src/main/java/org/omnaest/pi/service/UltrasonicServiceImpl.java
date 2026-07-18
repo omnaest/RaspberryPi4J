@@ -7,45 +7,47 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import org.omnaest.pi.domain.UltrasonicSensorConfiguration;
+import org.omnaest.pi.service.gpio.GPIOService;
+import org.omnaest.pi.service.gpio.GPIOService.DigitalInputGPIOPort;
+import org.omnaest.pi.service.gpio.GPIOService.DigitalOutputGPIOPort;
 import org.omnaest.pi.service.utils.NanoDuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.pi4j.io.gpio.GpioController;
-import com.pi4j.io.gpio.GpioFactory;
-import com.pi4j.io.gpio.GpioPinDigitalInput;
-import com.pi4j.io.gpio.GpioPinDigitalOutput;
-import com.pi4j.io.gpio.PinPullResistance;
-import com.pi4j.io.gpio.PinState;
-import com.pi4j.io.gpio.RaspiPin;
 
 @Service
 public class UltrasonicServiceImpl implements UltrasonicService
 {
-    private static final Logger LOG = LoggerFactory.getLogger(UltrasonicServiceImpl.class);
+    private static final Logger                    LOG                             = LoggerFactory.getLogger(UltrasonicServiceImpl.class);
+
+    @Autowired
+    private GPIOService                            gpioService;
 
     private Map<Integer, UltrasonicDistanceSensor> indexToUltrasonicDistanceSensor = new ConcurrentHashMap<>();
 
     @Override
     public UltrasonicDistanceSensor getInstance(int index)
     {
-        return this.indexToUltrasonicDistanceSensor.computeIfAbsent(index, i -> new UltrasonicDistanceSensorImpl());
+        return this.indexToUltrasonicDistanceSensor.computeIfAbsent(index, i -> new UltrasonicDistanceSensorImpl(this.gpioService));
     }
 
     public static class UltrasonicDistanceSensorImpl implements UltrasonicDistanceSensor
     {
-        private long pingTimeout   = 1000;
-        private long signalTimeout = 1000;
+        private long                  pingTimeout   = 1000;
+        private long                  signalTimeout = 1000;
 
-        private GpioPinDigitalOutput triggerPin;
-        private GpioPinDigitalInput  echoPin;
+        private final GPIOService     gpioService;
 
-        private boolean initialized = false;
-        private int[]   signals;
+        private DigitalOutputGPIOPort triggerPort;
+        private DigitalInputGPIOPort  echoPort;
 
-        public UltrasonicDistanceSensorImpl()
+        private boolean               initialized   = false;
+        private int[]                 signals;
+
+        public UltrasonicDistanceSensorImpl(GPIOService gpioService)
         {
+            this.gpioService = gpioService;
         }
 
         @Override
@@ -59,10 +61,16 @@ public class UltrasonicServiceImpl implements UltrasonicService
                 this.pingTimeout = configuration.getPingTimeout();
                 this.signalTimeout = configuration.getSignalTimeout();
 
-                GpioController controller = GpioFactory.getInstance();
-                this.triggerPin = controller.provisionDigitalOutputPin(RaspiPin.getPinByAddress(configuration.getTriggerPort()), "pin_trig", PinState.HIGH);
-                this.triggerPin.setShutdownOptions(true, PinState.LOW);
-                this.echoPin = controller.provisionDigitalInputPin(RaspiPin.getPinByAddress(configuration.getEchoPort()), PinPullResistance.PULL_DOWN);
+                // Note: pi4j's setShutdownOptions(true, PinState.LOW) on the trigger pin has no GPIOService
+                // equivalent, so the trigger port is no longer forced low automatically on JVM shutdown. Accepted,
+                // documented trade-off (see plan-56 open risks) - sendSignal() drives the trigger port explicitly on
+                // every measurement regardless.
+                this.triggerPort = this.gpioService.getDigitalOutputGPIOPort(configuration.getTriggerPort())
+                                                   .enable();
+
+                this.echoPort = this.gpioService.getDigitalInputGPIOPort(configuration.getEchoPort())
+                                                .withPullDownResistance()
+                                                .enable();
 
                 this.signals = configuration.getSignals();
             }
@@ -74,7 +82,7 @@ public class UltrasonicServiceImpl implements UltrasonicService
             //
             this.assertInitialized();
 
-            // 
+            //
             this.sendSignal();
 
             //
@@ -86,7 +94,7 @@ public class UltrasonicServiceImpl implements UltrasonicService
                                                      double distance = signalTravelDuration / 5830.9037900874635568513119533528;
 
                                                      LOG.debug("Ultrasonic signal received after " + signalTravelDuration + " ns with a distance of " + distance
-                                                             + " mm");
+                                                               + " mm");
                                                      return distance;
                                                  }))
                        .orElse(Double.NEGATIVE_INFINITY);
@@ -107,7 +115,7 @@ public class UltrasonicServiceImpl implements UltrasonicService
             boolean state = false;
             for (int duration : this.signals)
             {
-                this.triggerPin.setState(state);
+                this.triggerPort.setState(state);
                 busyWait(duration, TimeUnit.MICROSECONDS);
                 state = !state;
             }
@@ -119,7 +127,7 @@ public class UltrasonicServiceImpl implements UltrasonicService
 
             NanoDuration duration = NanoDuration.start();
             boolean timeout = false;
-            while (this.echoPin.isLow())
+            while (!this.echoPort.getState())
             {
                 if (duration.stop() >= this.pingTimeout)
                 {
@@ -143,7 +151,7 @@ public class UltrasonicServiceImpl implements UltrasonicService
             {
                 NanoDuration duration = NanoDuration.start();
                 boolean timeout = false;
-                while (this.echoPin.isHigh())
+                while (this.echoPort.getState())
                 {
                     if (duration.stop() >= this.signalTimeout)
                     {

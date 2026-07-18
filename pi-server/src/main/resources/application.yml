@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: pi-server
+
+---
+spring:
+  config:
+    activate:
+      on-profile: simulation
+
+logging:
+  level:
+    org.omnaest.pi: DEBUG

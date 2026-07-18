@@ -21,7 +21,7 @@ import lombok.Data;
 public class GpioPortExpanderPCF8574ServiceImpl implements GpioPortExpanderPCF8574Service
 {
     @Autowired
-    private I2CService i2cService;
+    private I2CService                                         i2cService;
 
     private final Map<GpioPortExpanderAddress, PCF8574Address> addressToAccessor = new ConcurrentHashMap<>();
 

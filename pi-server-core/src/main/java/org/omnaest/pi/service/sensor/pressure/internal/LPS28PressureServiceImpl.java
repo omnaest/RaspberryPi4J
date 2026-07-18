@@ -24,7 +24,7 @@ import lombok.Data;
 public class LPS28PressureServiceImpl implements LPS28PressureService
 {
     @Autowired
-    private I2CService i2cService;
+    private I2CService    i2cService;
 
     private int           bus           = 1;
     private int           address       = 0x5C;

@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class WeightServiceImpl implements WeightService
 {
     @Autowired
-    private GPIOService gpioService;
+    private GPIOService    gpioService;
 
     @Autowired
     private Nau7802Service nau7802Service;
@@ -134,7 +134,7 @@ public class WeightServiceImpl implements WeightService
             if (durationMeasurementResult.getDuration(TimeUnit.SECONDS) >= 5)
             {
                 throw new IllegalStateException("Waiting for data port to be ready timed out after " + durationMeasurementResult.getDurationAsCanonicalString()
-                        + ". Port = " + dataPort);
+                                                + ". Port = " + dataPort);
             }
         }
     }

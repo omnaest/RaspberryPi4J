@@ -23,6 +23,6 @@ import org.omnaest.pi.domain.CameraSnapshotOptions;
 
 public interface CameraService
 {
-	CameraSnapshot takeSnapshot(CameraSnapshotOptions cameraSnapshotOptions);
+    CameraSnapshot takeSnapshot(CameraSnapshotOptions cameraSnapshotOptions);
 
 }

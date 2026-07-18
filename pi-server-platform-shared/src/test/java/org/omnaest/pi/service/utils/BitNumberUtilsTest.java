@@ -15,7 +15,7 @@ public class BitNumberUtilsTest
         int isb = 0b00000111; // address = 1    16:8
         int lsb = 0b00001111; // address = 2    7:0
         int value = (msb << 24 | isb << 16 | lsb << 8) / (1 << 8);
-        assertEquals(value, BitNumberUtils.mapBitsFromMsbToLsbAsSignedInteger(Bits.of(new byte[] { (byte) msb, (byte) isb, (byte) lsb })));
+        assertEquals(value, BitNumberUtils.mapBitsFromMsbToLsbAsSignedInteger(Bits.of(new byte[] {(byte) msb, (byte) isb, (byte) lsb})));
     }
 
     @Test
@@ -25,16 +25,16 @@ public class BitNumberUtilsTest
         byte isb = 0b00000111; // address = 1    16:8
         byte lsb = 0b00001111; // address = 2    7:0
         int value = msb << 16 | isb << 8 | lsb;
-        assertEquals(value, BitNumberUtils.mapBitsFromMsbToLsbAsUnsignedInteger(Bits.of(new byte[] { msb, isb, lsb })));
+        assertEquals(value, BitNumberUtils.mapBitsFromMsbToLsbAsUnsignedInteger(Bits.of(new byte[] {msb, isb, lsb})));
     }
 
     @Test
     public void testMapBitsFromLsbToMsbAsUnsignedInteger()
     {
-        int msb = 0b10000011; // address = 2    
-        int isb = 0b00000111; // address = 1   
-        int lsb = 0b00001111; // address = 0   
+        int msb = 0b10000011; // address = 2
+        int isb = 0b00000111; // address = 1
+        int lsb = 0b00001111; // address = 0
         int value = msb << 16 | isb << 8 | lsb;
-        assertEquals(value, BitNumberUtils.mapBitsFromLsbToMsbAsUnsignedInteger(Bits.of(new byte[] { (byte) lsb, (byte) isb, (byte) msb })));
+        assertEquals(value, BitNumberUtils.mapBitsFromLsbToMsbAsUnsignedInteger(Bits.of(new byte[] {(byte) lsb, (byte) isb, (byte) msb})));
     }
 }

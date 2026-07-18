@@ -26,7 +26,7 @@ import lombok.Data;
 public class FlowSensorServiceImpl implements FlowSensorService
 {
     @Autowired
-    private GPIOService gpioService;
+    private GPIOService                     gpioService;
 
     private Map<Integer, FlowSensorContext> signalPortToFlowSensorContext = new ConcurrentHashMap<>();
 

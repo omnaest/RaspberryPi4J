@@ -1,30 +1,18 @@
 package org.omnaest.pi.service.servo.internal;
 
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
-
-import javax.annotation.PreDestroy;
+import java.util.stream.IntStream;
 
 import org.omnaest.pi.service.servo.ServoDriverService;
+import org.omnaest.pi.service.servo.chip.PwmChipDriver;
 import org.omnaest.utils.element.cached.CachedElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.pi4j.gpio.extension.pca.PCA9685GpioProvider;
-import com.pi4j.gpio.extension.pca.PCA9685Pin;
-import com.pi4j.io.gpio.GpioController;
-import com.pi4j.io.gpio.GpioFactory;
-import com.pi4j.io.gpio.GpioPinPwmOutput;
-import com.pi4j.io.gpio.Pin;
-import com.pi4j.io.i2c.I2CBus;
-import com.pi4j.io.i2c.I2CFactory;
-import com.pi4j.io.i2c.I2CFactory.UnsupportedBusNumberException;
 
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
@@ -34,8 +22,10 @@ public class ServoDriverServiceImpl implements ServoDriverService
 {
     private static final Logger LOG = LoggerFactory.getLogger(ServoDriverServiceImpl.class);
 
+    @Autowired
+    private PwmChipDriver       chipDriver;
+
     private List<ServoProvider> servos;
-    private PCA9685GpioProvider provider;
 
     private void ensureInitialization()
     {
@@ -45,39 +35,15 @@ public class ServoDriverServiceImpl implements ServoDriverService
             {
                 if (this.servos == null)
                 {
-                    try
-                    {
-                        I2CBus bus = this.newI2CBus();
-                        BigDecimal frequency = new BigDecimal("48.828");
-                        BigDecimal frequencyCorrectionFactor = new BigDecimal("1.0578");
-                        PCA9685GpioProvider provider = this.provider = new PCA9685GpioProvider(bus, 0x40, frequency, frequencyCorrectionFactor);
-
-                        GpioController gpioController = GpioFactory.getInstance();
-                        this.servos = Stream.of(PCA9685Pin.ALL)
-                                            .map(pin -> ServoProvider.builder()
-                                                                     .gpioController(gpioController)
-                                                                     .gpioProvider(provider)
-                                                                     .pin(pin)
-                                                                     .build())
-                                            .toList();
-
-                    }
-                    catch (Exception e)
-                    {
-                        LOG.warn("Unable to initialize I2C");
-                        LOG.debug("I2C error", e);
-                    }
+                    PwmChipDriver chipDriver = this.chipDriver;
+                    this.servos = IntStream.range(0, chipDriver.getChannelCount())
+                                           .mapToObj(channel -> ServoProvider.builder()
+                                                                             .channel(channel)
+                                                                             .chipDriver(chipDriver)
+                                                                             .build())
+                                           .toList();
                 }
             }
-        }
-    }
-
-    @PreDestroy
-    public void destroy()
-    {
-        if (this.provider != null)
-        {
-            this.provider.shutdown();
         }
     }
 
@@ -97,30 +63,6 @@ public class ServoDriverServiceImpl implements ServoDriverService
                           .get();
     }
 
-    private I2CBus newI2CBus() throws UnsupportedBusNumberException, IOException
-    {
-        return Arrays.asList(I2CBus.BUS_1, I2CBus.BUS_0, I2CBus.BUS_2)
-                     .stream()
-                     .map(index ->
-                     {
-                         try
-                         {
-                             I2CBus i2cBus = I2CFactory.getInstance(index);
-                             LOG.info("Created instance of bus " + index);
-                             return i2cBus;
-                         }
-                         catch (Exception e)
-                         {
-                             LOG.debug("", e);
-                             LOG.info("Tested bus " + index + " as not available");
-                             return null;
-                         }
-                     })
-                     .filter(factory -> factory != null)
-                     .findFirst()
-                     .orElseThrow(() -> new IllegalStateException("No I2C bus available"));
-    }
-
     private static interface ServoAndPwm extends Servo, PwmPin
     {
     }
@@ -128,26 +70,24 @@ public class ServoDriverServiceImpl implements ServoDriverService
     @RequiredArgsConstructor
     private static class ServoAndPwmImpl implements ServoAndPwm
     {
-        private final GpioPinPwmOutput    output;
-        private final Pin                 pin;
-        private final PCA9685GpioProvider provider;
-        private final int                 index;
-        private int                       durationMinimum = 1;
-        private int                       durationMaximum = 3200;
-        private Supplier<Integer>         durationNeutral = () -> this.durationMaximum / 2;
+        private final int           channel;
+        private final PwmChipDriver chipDriver;
+        private int                 durationMinimum = 1;
+        private int                 durationMaximum = 3200;
+        private Supplier<Integer>   durationNeutral = () -> this.durationMaximum / 2;
 
         @Override
         public void applyAngle(int angle)
         {
             try
             {
-                LOG.debug("Set servo " + this.index + " state to angle " + angle);
+                LOG.debug("Set servo " + this.channel + " state to angle " + angle);
 
                 this.logCurrentPWMStates();
 
-                this.provider.setPwm(this.determineServoPin(this.index), this.determineServoDuration(angle));
+                this.chipDriver.setPwm(this.channel, this.determineServoDuration(angle));
 
-                LOG.debug("Current state (servo " + this.index + "): " + Arrays.toString(this.determineCurrentOnOffValues(this.index)));
+                LOG.debug("Current state (servo " + this.channel + "): " + Arrays.toString(this.determineCurrentOnOffValues()));
 
                 this.logCurrentPWMStates();
             }
@@ -163,14 +103,14 @@ public class ServoDriverServiceImpl implements ServoDriverService
         {
             try
             {
-                LOG.debug("Set servo " + this.index + " state to speed " + NumberFormat.getPercentInstance()
-                                                                                       .format(speed));
+                LOG.debug("Set servo " + this.channel + " state to speed " + NumberFormat.getPercentInstance()
+                                                                                         .format(speed));
 
                 this.logCurrentPWMStates();
 
-                this.provider.setPwm(this.determineServoPin(this.index), this.determineServoDurationForSpeed(speed));
+                this.chipDriver.setPwm(this.channel, this.determineServoDurationForSpeed(speed));
 
-                LOG.debug("Current state (servo " + this.index + "): " + Arrays.toString(this.determineCurrentOnOffValues(this.index)));
+                LOG.debug("Current state (servo " + this.channel + "): " + Arrays.toString(this.determineCurrentOnOffValues()));
 
                 this.logCurrentPWMStates();
             }
@@ -207,27 +147,19 @@ public class ServoDriverServiceImpl implements ServoDriverService
             return result;
         }
 
-        private int[] determineCurrentOnOffValues(int servoIndex)
+        private int[] determineCurrentOnOffValues()
         {
-            return this.provider.getPwmOnOffValues(this.output.getPin());
+            return this.chipDriver.getPwmOnOffValues(this.channel);
         }
 
         private void logCurrentPWMStates()
         {
             if (LOG.isDebugEnabled())
             {
-                int[] onOffValues = this.provider.getPwmOnOffValues(this.output.getPin());
+                int[] onOffValues = this.chipDriver.getPwmOnOffValues(this.channel);
 
-                String pinName = this.output.getPin()
-                                            .getName();
-                String name = this.output.getName();
-                LOG.debug(pinName + " (" + name + "): ON value [" + onOffValues[0] + "], OFF value [" + onOffValues[1] + "] ");
+                LOG.debug("channel " + this.channel + ": ON value [" + onOffValues[0] + "], OFF value [" + onOffValues[1] + "] ");
             }
-        }
-
-        private Pin determineServoPin(int servoIndex)
-        {
-            return PCA9685Pin.ALL[servoIndex];
         }
 
         @Override
@@ -253,18 +185,18 @@ public class ServoDriverServiceImpl implements ServoDriverService
         {
             if (value)
             {
-                this.provider.setAlwaysOn(this.pin);
+                this.chipDriver.setAlwaysOn(this.channel);
             }
             else
             {
-                this.provider.setAlwaysOff(this.pin);
+                this.chipDriver.setAlwaysOff(this.channel);
             }
         }
 
         @Override
         public void setPwm(double value)
         {
-            int periodDurationMicros = this.provider.getPeriodDurationMicros();
+            int periodDurationMicros = this.chipDriver.getPeriodDurationMicros();
             int duration = (int) Math.round(value * periodDurationMicros);
 
             if (duration <= 0)
@@ -277,7 +209,7 @@ public class ServoDriverServiceImpl implements ServoDriverService
             }
             else
             {
-                this.provider.setPwm(this.pin, duration);
+                this.chipDriver.setPwm(this.channel, duration);
             }
         }
 
@@ -286,25 +218,22 @@ public class ServoDriverServiceImpl implements ServoDriverService
     @Builder
     private static class ServoProvider implements Supplier<ServoAndPwm>
     {
-        private final Pin                        pin;
-        private final GpioController             gpioController;
-        private final PCA9685GpioProvider        gpioProvider;
+        private final int                        channel;
+        private final PwmChipDriver              chipDriver;
         private final CachedElement<ServoAndPwm> servo = CachedElement.of(this::createServoInstance);
 
         private ServoAndPwm createServoInstance()
         {
-            GpioPinPwmOutput output = this.gpioController.provisionPwmOutputPin(this.gpioProvider, this.pin, this.pin.getName());
-
             try
             {
-                this.gpioProvider.setAlwaysOff(this.pin);
+                this.chipDriver.setAlwaysOff(this.channel);
             }
             catch (Exception e)
             {
-                LOG.error("Failed to reset the pin: " + this.pin.getName(), e);
+                LOG.error("Failed to reset the channel: " + this.channel, e);
             }
 
-            return new ServoAndPwmImpl(output, this.pin, this.gpioProvider, this.pin.getAddress());
+            return new ServoAndPwmImpl(this.channel, this.chipDriver);
         }
 
         @Override

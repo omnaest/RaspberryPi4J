@@ -28,6 +28,7 @@ import javax.annotation.PreDestroy;
 import org.omnaest.pi.service.gpio.GPIOService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.pi4j.io.gpio.GpioController;
@@ -45,13 +46,14 @@ import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 import com.pi4j.io.gpio.event.PinEventType;
 
 @Service
+@Profile("!simulation")
 public class GPIOServiceImpl implements GPIOService
 {
-    private static Logger LOG = LoggerFactory.getLogger(GPIOServiceImpl.class);
+    private static Logger                            LOG                    = LoggerFactory.getLogger(GPIOServiceImpl.class);
 
-    private static final int PWM_DEFAULT_RANGE = 100;
+    private static final int                         PWM_DEFAULT_RANGE      = 100;
 
-    private GpioController gpioController;
+    private GpioController                           gpioController;
 
     private final Map<Integer, GpioPinDigitalOutput> portToDigitalOutputPin = new ConcurrentHashMap<>();
     private final Map<Integer, GpioPinDigitalInput>  portToDigitalInputPin  = new ConcurrentHashMap<>();
@@ -120,8 +122,7 @@ public class GPIOServiceImpl implements GPIOService
     {
         GpioController gpioController = this.gpioController;
         Map<Integer, GpioPinPwmOutput> portToPWMOutputPin = this.portToPWMOutputPin;
-        return new PwmGPIOPort()
-        {
+        return new PwmGPIOPort() {
             @Override
             public PwmGPIOPort enable()
             {
@@ -177,8 +178,7 @@ public class GPIOServiceImpl implements GPIOService
     {
         GpioController gpioController = this.gpioController;
         Map<Integer, GpioPinDigitalOutput> portToDigitalOutputPin = this.portToDigitalOutputPin;
-        return new DigitalOutputGPIOPort()
-        {
+        return new DigitalOutputGPIOPort() {
             @Override
             public DigitalOutputGPIOPort enable()
             {
@@ -347,8 +347,7 @@ public class GPIOServiceImpl implements GPIOService
         public DigitalInputGPIOPort addStateChangeListener(Consumer<DigitalInputPinStateChange> stateChangeListener)
         {
             GpioPinDigitalInput pin = this.portToDigitalInputPin.get(this.port);
-            pin.addListener(new GpioPinListenerDigital()
-            {
+            pin.addListener(new GpioPinListenerDigital() {
                 @Override
                 public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event)
                 {

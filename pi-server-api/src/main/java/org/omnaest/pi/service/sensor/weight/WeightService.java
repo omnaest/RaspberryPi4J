@@ -35,9 +35,9 @@ public interface WeightService
     @Builder
     public static class HX711PortConfiguration
     {
-        private final int dataPort;
+        private final int  dataPort;
 
-        private final int clockPort;
+        private final int  clockPort;
 
         @Default
         private final Gain gain = Gain.CHANNEL_A_HIGH;

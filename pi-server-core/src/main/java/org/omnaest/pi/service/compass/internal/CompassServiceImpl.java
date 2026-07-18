@@ -19,13 +19,11 @@ public class CompassServiceImpl implements CompassService
     public CompassBus onBus(int bus)
     {
         I2CService i2cService = this.i2cService;
-        return new CompassBus()
-        {
+        return new CompassBus() {
             @Override
             public Compass withModule(Module module)
             {
-                return new Compass()
-                {
+                return new Compass() {
                     @Override
                     public int getNorthDirectionAngle()
                     {

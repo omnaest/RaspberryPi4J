@@ -60,8 +60,7 @@ public class PIRemoteClient implements PiClient
         String host = this.host;
         int port = this.port;
 
-        return new DigitalPortControl()
-        {
+        return new DigitalPortControl() {
             @Override
             public void setState(boolean state)
             {
@@ -109,8 +108,7 @@ public class PIRemoteClient implements PiClient
     @Override
     public UltrasonicSensorControl forUltrasonicSensor(int index)
     {
-        return new UltrasonicSensorControl()
-        {
+        return new UltrasonicSensorControl() {
             private UltrasonicSensorControl init(UltrasonicSensorConfigurationImpl configuration)
             {
                 String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/sensor/ultrasonic/" + index;
@@ -145,8 +143,7 @@ public class PIRemoteClient implements PiClient
     @Override
     public ServoControl forServo(int index, int bus)
     {
-        return new ServoControl()
-        {
+        return new ServoControl() {
             @Override
             public ServoControl setAngle(int angle)
             {
@@ -199,8 +196,7 @@ public class PIRemoteClient implements PiClient
     @Override
     public ServoPinControl forServoPin(int index, int bus)
     {
-        return new ServoPinControl()
-        {
+        return new ServoPinControl() {
             @Override
             public ServoPinControl enable()
             {
@@ -231,8 +227,7 @@ public class PIRemoteClient implements PiClient
     @Override
     public BMP180 forBMP180()
     {
-        return new BMP180()
-        {
+        return new BMP180() {
             @Override
             public BMP180MeasurementImpl getMeasurement()
             {
@@ -252,8 +247,7 @@ public class PIRemoteClient implements PiClient
     @Override
     public Compass forCompass()
     {
-        return new Compass()
-        {
+        return new Compass() {
             private Module module = Module.QMC5883L;
             private int    bus    = 1;
 
@@ -261,7 +255,7 @@ public class PIRemoteClient implements PiClient
             public int getNorthDirectionAngleClockwise()
             {
                 String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/sensor/compass/i2c/direction?module=" + this.module
-                        + "&bus=" + this.bus;
+                             + "&bus=" + this.bus;
                 return NumberUtils.toInt(RestHelper.requestGet(url));
             }
 
@@ -284,8 +278,7 @@ public class PIRemoteClient implements PiClient
     @Override
     public RotaryEncoder forRotaryEncoder()
     {
-        return new RotaryEncoder()
-        {
+        return new RotaryEncoder() {
             private int clkPort;
             private int dtPort;
             private int swPort = -1;
@@ -315,7 +308,7 @@ public class PIRemoteClient implements PiClient
             public long getAsLong()
             {
                 String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/sensor/rotaryencoder/pin?clkPort=" + this.clkPort
-                        + "&dtPort=" + this.dtPort + "&swPort=" + this.swPort;
+                             + "&dtPort=" + this.dtPort + "&swPort=" + this.swPort;
                 return NumberUtils.toLong(RestHelper.requestGet(url));
             }
         };
@@ -324,19 +317,19 @@ public class PIRemoteClient implements PiClient
     public static class UltrasonicSensorConfigurationImpl implements UltrasonicSensorConfiguration
     {
         @JsonProperty
-        private int echoPort;
+        private int   echoPort;
 
         @JsonProperty
-        private int triggerPort;
+        private int   triggerPort;
 
         @JsonProperty
-        private long pingTimeout = 30000000;
+        private long  pingTimeout   = 30000000;
 
         @JsonProperty
-        private long signalTimeout = 30000000;
+        private long  signalTimeout = 30000000;
 
         @JsonProperty
-        private int[] signals = new int[] { 3, 10, 0 };
+        private int[] signals       = new int[] {3, 10, 0};
 
         public UltrasonicSensorConfigurationImpl()
         {
@@ -407,7 +400,7 @@ public class PIRemoteClient implements PiClient
         public String toString()
         {
             return "UltrasonicSensorConfiguration [echoPort=" + this.echoPort + ", triggerPort=" + this.triggerPort + ", pingTimeout=" + this.pingTimeout
-                    + ", signalTimeout=" + this.signalTimeout + ", signals=" + Arrays.toString(this.signals) + "]";
+                   + ", signalTimeout=" + this.signalTimeout + ", signals=" + Arrays.toString(this.signals) + "]";
         }
 
     }
@@ -451,10 +444,10 @@ public class PIRemoteClient implements PiClient
     public static class BMP180MeasurementImpl implements BMP180Measurement
     {
         @JsonProperty
-        private double altitude;
+        private double      altitude;
 
         @JsonProperty
-        private double pressure;
+        private double      pressure;
 
         @JsonProperty
         private Temperature temperature;
@@ -501,8 +494,7 @@ public class PIRemoteClient implements PiClient
     @Override
     public GyroscopeGY521 forGyroscopeGY521()
     {
-        return new GyroscopeGY521()
-        {
+        return new GyroscopeGY521() {
             private int numberOfSamplings = 1;
 
             @Override
@@ -516,7 +508,7 @@ public class PIRemoteClient implements PiClient
             public Orientation getOrientation()
             {
                 String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/sensor/gyroscope/i2c/orientation?numberOfSamplings="
-                        + this.numberOfSamplings;
+                             + this.numberOfSamplings;
                 return JSONHelper.readFromString(RestHelper.requestGet(url), Orientation.class);
             }
         };
@@ -525,19 +517,17 @@ public class PIRemoteClient implements PiClient
     @Override
     public I2CAccess forI2C()
     {
-        return new I2CAccess()
-        {
+        return new I2CAccess() {
             @Override
             public I2CBusAccess onBus(int bus)
             {
-                return new I2CBusAccess()
-                {
+                return new I2CBusAccess() {
 
                     @Override
                     public byte readByte(int deviceAddress, int localAddress, int offset)
                     {
                         String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/i2c/bus/" + bus + "/address/" + deviceAddress
-                                + "/" + localAddress + "/offset/" + offset;
+                                     + "/" + localAddress + "/offset/" + offset;
                         return Optional.ofNullable(RestHelper.requestGet(url))
                                        .map(Byte::valueOf)
                                        .orElse((byte) 0);
@@ -547,7 +537,7 @@ public class PIRemoteClient implements PiClient
                     public void writeByte(int deviceAddress, int localAddress, int offset, byte value)
                     {
                         String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/i2c/bus/" + bus + "/address/" + deviceAddress
-                                + "/" + localAddress;
+                                     + "/" + localAddress;
                         RestHelper.requestPut(url, String.valueOf(value));
                     }
                 };
@@ -558,8 +548,7 @@ public class PIRemoteClient implements PiClient
     @Override
     public Motor motor()
     {
-        return new Motor()
-        {
+        return new Motor() {
             private String id;
 
             @Override
@@ -591,13 +580,12 @@ public class PIRemoteClient implements PiClient
     @Override
     public GpioPortExpanderPCF8574 gpioPortExpanderPCF8574(GpioPortExpanderAddress address)
     {
-        return new GpioPortExpanderPCF8574()
-        {
+        return new GpioPortExpanderPCF8574() {
             @Override
             public GpioPortExpanderPCF8574 write(GpioPortExpanderPort port, boolean value)
             {
                 String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/gpio/expander/PCF8574/" + address.name() + "/"
-                        + port.name();
+                             + port.name();
                 RestHelper.requestPut(url, JSONHelper.prettyPrint(value));
                 return this;
             }
@@ -606,7 +594,7 @@ public class PIRemoteClient implements PiClient
             public boolean read(GpioPortExpanderPort port)
             {
                 String url = "http://" + PIRemoteClient.this.host + ":" + PIRemoteClient.this.port + "/gpio/expander/PCF8574/" + address.name() + "/"
-                        + port.name();
+                             + port.name();
                 return BooleanUtils.toBoolean(RestHelper.requestGet(url));
             }
         };
@@ -732,8 +720,7 @@ public class PIRemoteClient implements PiClient
     @Override
     public HX711Definition weightSensorHX711()
     {
-        return new HX711Definition()
-        {
+        return new HX711Definition() {
             private final static int UNDEFINED_PORT = -1;
             private Gain             gain           = Gain.CHANNEL_A_HIGH;
             private int              dataPort       = UNDEFINED_PORT;

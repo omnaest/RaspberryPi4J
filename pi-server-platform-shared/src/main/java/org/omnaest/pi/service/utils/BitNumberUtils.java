@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Utility to translate bits into numbers.
- * 
+ *
  * @author omnaest
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -27,7 +27,7 @@ public class BitNumberUtils
                           .toInt() << shiftSize;
         return unsignedIntegerBits.shiftLeft(shiftSize)
                                   .toInt()
-                / divisor;
+               / divisor;
     }
 
     public static int mapBitsFromMsbToLsbAsUnsignedInteger(Bits bits)

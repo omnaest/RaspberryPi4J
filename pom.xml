@@ -12,6 +12,9 @@
         <module>pi-client-api</module>
         <module>pi-server-core</module>
         <module>pi-server-api</module>
+        <module>pi-server-platform-shared</module>
+        <module>pi-server-platform</module>
+        <module>pi-server-platform-simulation</module>
     </modules>
 
     <distributionManagement>

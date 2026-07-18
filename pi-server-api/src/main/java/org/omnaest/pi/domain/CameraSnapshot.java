@@ -20,33 +20,33 @@ package org.omnaest.pi.domain;
 
 public class CameraSnapshot
 {
-	private byte[]	data;
-	private String	errorMsg;
+    private byte[] data;
+    private String errorMsg;
 
-	public CameraSnapshot(byte[] data)
-	{
-		super();
-		this.data = data;
-	}
+    public CameraSnapshot(byte[] data)
+    {
+        super();
+        this.data = data;
+    }
 
-	public CameraSnapshot(String errorMsg)
-	{
-		this.errorMsg = errorMsg;
-	}
+    public CameraSnapshot(String errorMsg)
+    {
+        this.errorMsg = errorMsg;
+    }
 
-	public CameraSnapshot()
-	{
-		super();
-	}
+    public CameraSnapshot()
+    {
+        super();
+    }
 
-	public byte[] getData()
-	{
-		return this.data;
-	}
+    public byte[] getData()
+    {
+        return this.data;
+    }
 
-	public String getErrorMsg()
-	{
-		return this.errorMsg;
-	}
+    public String getErrorMsg()
+    {
+        return this.errorMsg;
+    }
 
 }

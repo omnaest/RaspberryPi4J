@@ -7,19 +7,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class UltrasonicSensorConfiguration
 {
     @JsonProperty
-    private int echoPort;
+    private int   echoPort;
 
     @JsonProperty
-    private int triggerPort;
+    private int   triggerPort;
 
     @JsonProperty
-    private long pingTimeout;
+    private long  pingTimeout;
 
     @JsonProperty
-    private long signalTimeout;
+    private long  signalTimeout;
 
     @JsonProperty
-    private int[] signals = new int[] { 5, 20, 0 };
+    private int[] signals = new int[] {5, 20, 0};
 
     public UltrasonicSensorConfiguration()
     {
@@ -80,7 +80,7 @@ public class UltrasonicSensorConfiguration
     public String toString()
     {
         return "UltrasonicSensorConfiguration [echoPort=" + this.echoPort + ", triggerPort=" + this.triggerPort + ", pingTimeout=" + this.pingTimeout
-                + ", signalTimeout=" + this.signalTimeout + ", signals=" + Arrays.toString(this.signals) + "]";
+               + ", signalTimeout=" + this.signalTimeout + ", signals=" + Arrays.toString(this.signals) + "]";
     }
 
 }

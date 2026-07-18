@@ -16,7 +16,7 @@ public class PiClientProvider
     private String host;
 
     @Value("${server.port:8080}")
-    private int port;
+    private int    port;
 
     @Bean
     public PiClient newPiClient()

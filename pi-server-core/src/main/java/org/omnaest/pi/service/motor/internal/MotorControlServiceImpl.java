@@ -18,9 +18,9 @@ import org.springframework.stereotype.Service;
 public class MotorControlServiceImpl implements MotorControlService
 {
     @Autowired
-    private GPIOService gpioService;
+    private GPIOService                              gpioService;
 
-    private Map<String, MotorControl>           motorControlIdToMotorControl           = new ConcurrentHashMap<>();
+    private Map<String, MotorControl>                motorControlIdToMotorControl           = new ConcurrentHashMap<>();
     private Map<L298nMotorControlDefinition, String> motorControlDefinitionToMotorControlId = new ConcurrentHashMap<>();
 
     @Override

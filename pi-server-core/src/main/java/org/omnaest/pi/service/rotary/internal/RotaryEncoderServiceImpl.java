@@ -27,10 +27,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class RotaryEncoderServiceImpl implements RotaryEncoderService
 {
-    private static final Logger LOG = LoggerFactory.getLogger(RotaryEncoderServiceImpl.class);
+    private static final Logger                                LOG                              = LoggerFactory.getLogger(RotaryEncoderServiceImpl.class);
 
     @Autowired
-    private GPIOService gpioService;
+    private GPIOService                                        gpioService;
 
     private Map<RotaryEncoderIdentifier, RotaryEncoderContext> rotaryEncoderIdentifierToContext = new ConcurrentHashMap<>();
     private ScheduledExecutorService                           executorService                  = Executors.newSingleThreadScheduledExecutor();
@@ -48,9 +48,8 @@ public class RotaryEncoderServiceImpl implements RotaryEncoderService
                                                      if (!rotaryEncoderStates.isEmpty())
                                                      {
                                                          LOG.info("Calculating rotary state for " + identifierAndContext.getKey());
-                                                         rotaryEncoderStates.forEach(new Consumer<RotaryEncoderState>()
-                                                         {
-                                                             private int clockwiseCounter        = 0;
+                                                         rotaryEncoderStates.forEach(new Consumer<RotaryEncoderState>() {
+                                                             private int clockwiseCounter = 0;
                                                              private int counterClockwiseCounter = 0;
 
                                                              @Override
@@ -287,8 +286,7 @@ public class RotaryEncoderServiceImpl implements RotaryEncoderService
         clkPortAccessor.addStateChangeListener(stateChange -> context.addState(new RotaryEncoderState(RotaryEncoderInputSource.CLK, stateChange.getCurrent())));
         dtPortAccessor.addStateChangeListener(stateChange -> context.addState(new RotaryEncoderState(RotaryEncoderInputSource.DT, stateChange.getCurrent())));
 
-        return new RotaryEncoder()
-        {
+        return new RotaryEncoder() {
             private int     minimum          = 0;
             private int     maximum          = Integer.MAX_VALUE;
             private boolean circularRotation = false;

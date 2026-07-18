@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 public class EnvironmentServiceImpl implements EnvironmentService
 {
     @Autowired
-    private I2CService i2cService;
+    private I2CService                    i2cService;
 
     private AtomicReference<BMP180Sensor> bmp180Sensor = new AtomicReference<>();
 
@@ -30,8 +30,7 @@ public class EnvironmentServiceImpl implements EnvironmentService
                                                                .flatMap(bus -> bus.connectTo(0x77))
                                                                .map(BPM180Device::new)
                                                                .flatMap(BPM180Device::calibrate)
-                                                               .map(device -> new BMP180Sensor()
-                                                               {
+                                                               .map(device -> new BMP180Sensor() {
                                                                    @Override
                                                                    public Optional<BMP180Measurement> measure()
                                                                    {
@@ -56,19 +55,19 @@ public class EnvironmentServiceImpl implements EnvironmentService
     {
         private static final Logger LOG = LoggerFactory.getLogger(BPM180Device.class);
 
-        private AddressConnector addressConnector;
+        private AddressConnector    addressConnector;
 
-        private int AC1;
-        private int AC2;
-        private int AC3;
-        private int AC4;
-        private int AC5;
-        private int AC6;
-        private int B1;
-        private int B2;
-        private int MB;
-        private int MC;
-        private int MD;
+        private int                 AC1;
+        private int                 AC2;
+        private int                 AC3;
+        private int                 AC4;
+        private int                 AC5;
+        private int                 AC6;
+        private int                 B1;
+        private int                 B2;
+        private int                 MB;
+        private int                 MC;
+        private int                 MD;
 
         public BPM180Device(AddressConnector addressConnector)
         {
