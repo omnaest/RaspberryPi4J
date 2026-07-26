@@ -27,6 +27,10 @@ A cross-tier smoke test, `pi-server/src/test/java/org/omnaest/pi/SimulationProfi
 
 As of this note, GPIO, I2C, servo/PCA9685 simulation, and `pi-server` profile wiring (plan-56) are all done, and the platform layer has been extracted from `pi-server-core` into the three dedicated `pi-server-platform*` modules (plan-58) so the module boundary itself confines pi4j to `pi-server-platform` and keeps `pi-server-core` + `pi-server-platform-simulation` provably pi4j-free.
 
+### MCP tool endpoint (`pi-server` only, plan-59)
+
+`pi-server/src/main/java/org/omnaest/pi/adapter/mcp/` exposes 35 MCP (Model Context Protocol) tools alongside the existing REST `DataController` — a 1:1 mirror of every `DataController` hardware endpoint except the generic reflection-based `/interaction` proxy, which is deliberately excluded. The wiring (`McpServerConfig`, `McpToolSupport`, `McpArgs`) is a near-verbatim port of the same pattern already proven in `ClaudeMemoryServer`'s `adapter/mcp` package, registered at `/mcp` via `io.modelcontextprotocol.sdk` (`mcp-bom:0.17.0`, added as a new `<dependencyManagement>` import in `pi-server/pom.xml` alongside the `mcp`/`mcp-spring-webmvc` deps — no other module's pom changed). Ten `*Tools` classes (`GpioTools`, `MotorTools`, `ServoTools`, `CameraTools`, `EnvironmentTools`, `CompassTools`, `I2CTools`, `UltrasonicTools`, `WeightTools`, `SensorTools`) group the 35 tools by `pi-server-api` service boundary, each injecting its wrapped service interface(s) directly (no new bounded context, no REST/security change). Tests (`pi-server/src/test/java/org/omnaest/pi/adapter/mcp/`) drive each tool's `call()` handler against the REAL `pi-server-api` service beans under the `simulation` profile, asserting via the `*SimulationControl` seams — never mocking the wrapped services.
+
 ## Build
 
 ```cmd
